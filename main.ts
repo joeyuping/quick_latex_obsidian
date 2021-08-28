@@ -1,91 +1,173 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Position } from 'codemirror';
+import { App, MarkdownView, Editor, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-interface MyPluginSettings {
+interface QuickLatexPluginSettings {
 	mySetting: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+const DEFAULT_SETTINGS: QuickLatexPluginSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class QuickLatexPlugin extends Plugin {
+	public settings: QuickLatexPluginSettings;
+
+	// cmEditors is used during unload to remove our event handlers.
+	private cmEditors: CodeMirror.Editor[];
 
 	async onload() {
-		console.log('loading plugin');
+		console.log('loading Quick-Latex plugin');
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
-		});
+		this.addSettingTab(new QuickLatexSettingTab(this.app, this));
 
-		this.addStatusBarItem().setText('Status Bar Text');
+		this.cmEditors = [];
+		this.registerCodeMirror((cm) => {
+			this.cmEditors.push(cm);
+			cm.on('keydown', this.handleKeyPress);
+			cm.on('keyup',this.handleKeyUp);
+		})
+	}
 
-		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
-			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-					return true;
+	public onunload(): void {
+		console.log('unloading Quick-Latex plugin');
+
+		this.cmEditors.forEach((cm) => {
+			cm.off('keypress', this.handleKeyPress);
+			cm.off('keyup',this.handleKeyUp)
+		  });
+	}
+
+	private readonly handleKeyPress = (
+		cm: CodeMirror.Editor,
+		event: KeyboardEvent,
+	  ): void => {
+		if (['$',' '].contains(event.key)) {
+			const activeLeaf = this.app.workspace.activeLeaf;
+			if (activeLeaf.view instanceof MarkdownView) {
+				const position = cm.getCursor();
+				switch (event.key) {
+					case '$':
+						const t = cm.getRange({line:position.line,ch:position.ch-1},{line:position.line,ch:position.ch})
+						const t2 = cm.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
+						const t_2 = cm.getRange({line:position.line,ch:position.ch-2},{line:position.line,ch:position.ch})
+						if (t == '$' && t2 != '$') {
+							cm.setCursor({line: position.line,ch:position.ch-1})
+						} else if (t_2 == '$$') {
+							cm.setCursor({line: position.line,ch:position.ch-1})
+						};
+						break;
+
+					case ' ':
+						const current_line = cm.getLine(position.line);
+						const last_dollar = current_line.lastIndexOf('$',position.ch-1);
+						new Notice(`last_dollar: ${last_dollar}`)
+						if (last_dollar == -1){
+							break;
+						};
+						const last_space = current_line.lastIndexOf(' ',position.ch);
+						const frac = last_space>last_dollar?last_space:last_dollar;
+						const last_divide = current_line.lastIndexOf('/',position.ch);
+						new Notice(`last_space: ${last_space},last_divide: ${last_divide},frac: ${frac}`);
+						if (last_divide > frac) {
+							cm.replaceRange('}',{line:position.line,ch:position.ch});
+							cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
+							cm.replaceRange('\\frac{',{line:position.line,ch:frac+1});
+							event.preventDefault();
+						}
+				};
+			};
+		};
+	};
+
+	private readonly handleKeyUp = (
+		cm: CodeMirror.Editor,
+		event: KeyboardEvent,
+	  ): void => {
+		if (['{'].contains(event.key)) {
+			const activeLeaf = this.app.workspace.activeLeaf;
+			if (activeLeaf.view instanceof MarkdownView) {
+				const position = cm.getCursor();	
+				const t = cm.getRange({line:position.line,ch:position.ch-2},{line:position.line,ch:position.ch-1})
+				if (t != '{') {
+					cm.replaceSelection('}','start')
 				}
-				return false;
-			}
-		});
-
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
-
-	onunload() {
-		console.log('unloading plugin');
-	}
+			};
+		};
+	};
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+	};
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
+	};
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+// let moveCursor = (line:number, ch:number): void => {
+// 	private readonly editor: Editor;
+  
+// 	constructor(editor: Editor);
+// 	constructor(obj: Editor) {
+// 	  this.editor = obj;
+// 	}
 
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
+// 	const position = 
 
-	onClose() {
-		let {contentEl} = this;
-		contentEl.empty();
+// }
+
+class ObsidianTextEditor {
+	private readonly editor: Editor;
+  
+	constructor(editor: Editor);
+	constructor(obj: Editor) {
+	  this.editor = obj;
 	}
+  
+	public getCursorPosition = (): Point => {
+	  const position = this.editor.getCursor();
+	  console.debug(
+		`getCursorPosition was called: line ${position.line}, ch ${position.ch}`,
+	  );
+	  return new Point(position.line, position.ch);
+	};
+  
+	public setCursorPosition = (pos: Point): void => {
+	  console.debug(
+		`setCursorPosition was called: line ${pos.row}, ch ${pos.column}`,
+	  );
+	  this.editor.setCursor({ line: pos.row, ch: pos.column });
+	};
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+declare class Point {
+    /**
+     * Row of the point.
+     */
+    readonly row: number;
+    /**
+     * Column of the point.
+     */
+    readonly column: number;
+    /**
+     * Creates a new `Point` object.
+     *
+     * @param row - Row of the point, starts from 0.
+     * @param column - Column of the point, starts from 0.
+     */
+    constructor(row: number, column: number);
+    /**
+     * Checks if the point is equal to another point.
+     */
+    equals(point: Point): boolean;
+}
 
-	constructor(app: App, plugin: MyPlugin) {
+class QuickLatexSettingTab extends PluginSettingTab {
+	plugin: QuickLatexPlugin;
+
+	constructor(app: App, plugin: QuickLatexPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
