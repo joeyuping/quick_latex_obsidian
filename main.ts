@@ -1,16 +1,6 @@
-import { Position } from 'codemirror';
-import { App, MarkdownView, Editor, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
-interface QuickLatexPluginSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: QuickLatexPluginSettings = {
-	mySetting: 'default'
-}
+import { MarkdownView, Notice, Plugin } from 'obsidian';
 
 export default class QuickLatexPlugin extends Plugin {
-	public settings: QuickLatexPluginSettings;
 
 	// cmEditors is used during unload to remove our event handlers.
 	private cmEditors: CodeMirror.Editor[];
@@ -18,14 +8,10 @@ export default class QuickLatexPlugin extends Plugin {
 	async onload() {
 		console.log('loading Quick-Latex plugin');
 
-		await this.loadSettings();
-
-		this.addSettingTab(new QuickLatexSettingTab(this.app, this));
-
 		this.cmEditors = [];
 		this.registerCodeMirror((cm) => {
 			this.cmEditors.push(cm);
-			cm.on('keydown', this.handleKeyPress);
+			cm.on('keypress', this.handleKeyPress);
 			cm.on('keyup',this.handleKeyUp);
 		})
 	}
@@ -96,99 +82,4 @@ export default class QuickLatexPlugin extends Plugin {
 			};
 		};
 	};
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	};
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	};
-}
-
-// let moveCursor = (line:number, ch:number): void => {
-// 	private readonly editor: Editor;
-  
-// 	constructor(editor: Editor);
-// 	constructor(obj: Editor) {
-// 	  this.editor = obj;
-// 	}
-
-// 	const position = 
-
-// }
-
-class ObsidianTextEditor {
-	private readonly editor: Editor;
-  
-	constructor(editor: Editor);
-	constructor(obj: Editor) {
-	  this.editor = obj;
-	}
-  
-	public getCursorPosition = (): Point => {
-	  const position = this.editor.getCursor();
-	  console.debug(
-		`getCursorPosition was called: line ${position.line}, ch ${position.ch}`,
-	  );
-	  return new Point(position.line, position.ch);
-	};
-  
-	public setCursorPosition = (pos: Point): void => {
-	  console.debug(
-		`setCursorPosition was called: line ${pos.row}, ch ${pos.column}`,
-	  );
-	  this.editor.setCursor({ line: pos.row, ch: pos.column });
-	};
-}
-
-declare class Point {
-    /**
-     * Row of the point.
-     */
-    readonly row: number;
-    /**
-     * Column of the point.
-     */
-    readonly column: number;
-    /**
-     * Creates a new `Point` object.
-     *
-     * @param row - Row of the point, starts from 0.
-     * @param column - Column of the point, starts from 0.
-     */
-    constructor(row: number, column: number);
-    /**
-     * Checks if the point is equal to another point.
-     */
-    equals(point: Point): boolean;
-}
-
-class QuickLatexSettingTab extends PluginSettingTab {
-	plugin: QuickLatexPlugin;
-
-	constructor(app: App, plugin: QuickLatexPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		let {containerEl} = this;
-
-		containerEl.empty();
-
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
 }
