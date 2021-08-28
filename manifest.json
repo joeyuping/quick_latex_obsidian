@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "quick-latex",
+	"name": "Quick Latex for Obsidian",
 	"version": "1.0.1",
 	"minAppVersion": "0.9.12",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md/about",
+	"description": "A very simple plugin to simplify latex math fraction and bracket typing.",
+	"author": "joeyuping",
+	"authorUrl": "https://github.com/joeyuping/quick_latex_obsidian",
 	"isDesktopOnly": false
 }
