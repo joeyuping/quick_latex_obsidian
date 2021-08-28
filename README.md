@@ -2,7 +2,7 @@
 
 This is a very simple plugin to simplify latex fraction and bracket typing, including:
 * Type two consecutive **\$\$** will automatically shift the cursor inbetween the **\$\$**.
-* Type **"{"** will automatically close with **"}"**.
+* Type **"{"** or **"["** will automatically close with **"}"** or **"]"**.
 * Type **"/"** instead of **\frac{}{}**.  
   E.g Type **\$e^2/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e^2}{2}\$** and display $\frac{e^2}{2}$
 

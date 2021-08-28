@@ -51,8 +51,10 @@ export default class QuickLatexPlugin extends Plugin {
 						if (last_dollar == -1){
 							break;
 						};
+						const last_equal = current_line.lastIndexOf('=',position.ch);
 						const last_space = current_line.lastIndexOf(' ',position.ch);
-						const frac = last_space>last_dollar?last_space:last_dollar;
+						let frac = last_space>last_dollar?last_space:last_dollar;
+						frac = last_equal>frac?last_equal:frac;
 						const last_divide = current_line.lastIndexOf('/',position.ch);
 						if (last_divide > frac) {
 							cm.replaceRange('}',{line:position.line,ch:position.ch});
@@ -69,14 +71,28 @@ export default class QuickLatexPlugin extends Plugin {
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	  ): void => {
-		if (['{'].contains(event.key)) {
+		if (['{','['].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
-				const position = cm.getCursor();	
+				const position = cm.getCursor();
+				const current_line = cm.getLine(position.line);
+				const last_dollar = current_line.lastIndexOf('$',position.ch-1);
+				if (last_dollar == -1){
+					return;
+				};
 				const t = cm.getRange({line:position.line,ch:position.ch-2},{line:position.line,ch:position.ch-1})
-				if (t != '{') {
-					cm.replaceSelection('}','start')
-				}
+				switch (event.key) {
+					case '{':		
+						if (t != '{') {
+							cm.replaceSelection('}','start')
+						};
+						break;
+					case '[':		
+						if (t != '[') {
+							cm.replaceSelection(']','start')
+						};
+						break;
+				};
 			};
 		};
 	};
