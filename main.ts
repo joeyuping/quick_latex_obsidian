@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Plugin } from 'obsidian';
+import { MarkdownView, Plugin } from 'obsidian';
 
 export default class QuickLatexPlugin extends Plugin {
 
@@ -48,14 +48,12 @@ export default class QuickLatexPlugin extends Plugin {
 					case ' ':
 						const current_line = cm.getLine(position.line);
 						const last_dollar = current_line.lastIndexOf('$',position.ch-1);
-						new Notice(`last_dollar: ${last_dollar}`)
 						if (last_dollar == -1){
 							break;
 						};
 						const last_space = current_line.lastIndexOf(' ',position.ch);
 						const frac = last_space>last_dollar?last_space:last_dollar;
 						const last_divide = current_line.lastIndexOf('/',position.ch);
-						new Notice(`last_space: ${last_space},last_divide: ${last_divide},frac: ${frac}`);
 						if (last_divide > frac) {
 							cm.replaceRange('}',{line:position.line,ch:position.ch});
 							cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
