@@ -93,7 +93,6 @@ export default class QuickLatexPlugin extends Plugin {
 						const last_greaterthan = current_line.lastIndexOf('>',position.ch-1)
 						const last_lesserthan = current_line.lastIndexOf('<',position.ch-1)
 						const frac = Math.max(last_equal, last_space, last_greaterthan, last_lesserthan, last_dollar)
-						new Notice(`${frac}`)
 						const last_divide = current_line.lastIndexOf('/',position.ch-1);
 						if (last_divide > frac) {
 							cm.replaceRange('}',{line:position.line,ch:position.ch});
@@ -138,7 +137,6 @@ export default class QuickLatexPlugin extends Plugin {
 function withinMath(cm:CodeMirror.Editor) {
 	// check if cursor within $$
 	const position = cm.getCursor();
-	new Notice(`position: ${position}`)
 	const current_line = cm.getLine(position.line);
 	const last_dollar = current_line.lastIndexOf('$',position.ch-1);
 	return last_dollar!=-1;
