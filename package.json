@@ -1,15 +1,15 @@
 {
-  "name": "obsidian-sample-plugin",
-  "version": "0.12.0",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "name": "quick-latex-for-obsidian",
+  "version": "1.0.3",
+  "description": "A very simple obsidian plugin to simplify latex math fraction and bracket typing.",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js --environment BUILD:production"
   },
   "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "author": "joeyuping",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^18.1.0",
     "@rollup/plugin-node-resolve": "^11.2.1",

@@ -1,11 +1,11 @@
 # Quick Latex for Obsidian
 
-This is a very simple plugin to simplify latex fraction and bracket typing, including:
+This is a very simple plugin to simplify latex math typing such as fraction and brackets, including:
 * Type two consecutive **\$\$** will automatically shift the cursor inbetween the **\$\$**.
 * Type **"{"** or **"["** will automatically close with **"}"** or **"]"**.
-* Typing expressions after subscript **"_"** or superscript **"^"** symbol then followed by **"space" key** will automatically surround the expressions with **"{}"**.
+* Typing expressions after superscript **"^"** symbol follow by a **"space" key** will automatically surround the expressions with **"{}"**.
 * Type **"/"** instead of **\frac{}{}**.  
-  E.g Type **\$e^2/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e^2}{2}\$** and display $\frac{e^2}{2}$
+  E.g Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$** and display $\frac{e}{2}$
 
 **Note:** 
 * The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime!
@@ -14,6 +14,7 @@ This is a very simple plugin to simplify latex fraction and bracket typing, incl
 
 Future:
 - [ ] - more robust checking whether cursor is within $$
+- [ ] - set custom shorthand for common symbols such as \sigma
 
 ### source code
 see https://github.com/joeyuping/quick_latex_obsidian

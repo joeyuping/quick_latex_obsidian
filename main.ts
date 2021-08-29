@@ -51,51 +51,71 @@ export default class QuickLatexPlugin extends Plugin {
 						if (this.withinMath(cm)) {
 							const position = cm.getCursor();
 							const current_line = cm.getLine(position.line);
-							const last_subscript = current_line.lastIndexOf('_',position.ch);
-							const last_superscript = current_line.lastIndexOf('^',position.ch);
-							const last_sub_sup = Math.max(last_subscript, last_superscript);
-							const last_divide = current_line.lastIndexOf('/',position.ch-1);
 
-							if (last_sub_sup > last_divide) {
-								this.sub_sup_bracketing(cm, event);
-								break;
+							// retrieve the last unbracketed superscript
+							let last_superscript = current_line.lastIndexOf('^',position.ch);
+							while (last_superscript != -1) {
+								const letter_after_superscript = cm.getRange({line:position.line,ch:last_superscript+1},{line:position.line,ch:last_superscript+2});
+								if (letter_after_superscript == '{') {
+									last_superscript = current_line.lastIndexOf('_', last_superscript-1);
+								} else {
+									break;
+								}
+							}
+
+							// only apply subscript bracketing if subscript found within 6 characters from cursor
+							// const last_6_characters = cm.getRange({line:position.line,ch:position.ch-6},{line:position.line,ch:position.ch});
+							// if (last_6_characters.contains('_')) {
+							// 	this.sub_bracketing(cm, event)
+							// }
+
+							const last_divide = current_line.lastIndexOf('/',position.ch-1);
+							if (last_superscript > last_divide) {
+								this.sup_bracketing(cm, event);
+								return;
 							} else {
 								this.frac_replace(cm, event);
-								break;
+								return;
 							}
+
+
+
 						}
-						break;
 				};
 			};
 		};
 	};
 
-	private sub_sup_bracketing =(
+	// private sub_bracketing =(
+	// 	cm:CodeMirror.Editor, 
+	// 	event: KeyboardEvent
+	// 	): void => {
+	// 	const position = cm.getCursor();
+	// 	const current_line = cm.getLine(position.line);
+
+	// 	// subscript bracketing
+	// 	const last_subscript = current_line.lastIndexOf('_',position.ch);
+	// 	if (last_subscript != -1) {
+	// 		const letter_after_subscript = cm.getRange({line:position.line,ch:last_subscript+1},{line:position.line,ch:last_subscript+2});
+	// 		if (letter_after_subscript != '{') {
+	// 			const last_sup = current_line.indexOf('^',last_subscript)==-1?999:current_line.indexOf('^',last_subscript);
+	// 			const last_divide = current_line.indexOf('/',last_subscript)==-1?999:current_line.indexOf('/',last_subscript);
+	// 			const sub_close_index = Math.min(last_sup, last_divide, position.ch);
+	// 			cm.replaceRange('}',{line:position.line,ch:sub_close_index});
+	// 			cm.replaceRange('{',{line:position.line,ch:last_subscript+1});
+	// 			event.preventDefault();
+	// 			return;
+	// 		}
+	// 	}
+	// }
+
+	private sup_bracketing =(
 		cm:CodeMirror.Editor, 
 		event: KeyboardEvent
 		): void => {
-		let position = cm.getCursor();
-		const current_line = cm.getLine(position.line);
-
-		// subscript bracketing
-		let last_subscript = current_line.lastIndexOf('_',position.ch);
-		while (last_subscript != -1) {
-			const letter_after_subscript = cm.getRange({line:position.line,ch:last_subscript+1},{line:position.line,ch:last_subscript+2});
-			if (letter_after_subscript != '{') {
-				const last_sup = current_line.indexOf('^',last_subscript)==-1?999:current_line.indexOf('^',last_subscript);
-				const last_divide = current_line.indexOf('/',last_subscript)==-1?999:current_line.indexOf('/',last_subscript);
-				const sub_close_index = Math.min(last_sup, last_divide, position.ch);
-				cm.replaceRange('}',{line:position.line,ch:sub_close_index});
-				cm.replaceRange('{',{line:position.line,ch:last_subscript+1});
-				event.preventDefault();
-				break;
-			} else {
-				last_subscript = current_line.lastIndexOf('_',last_subscript-1)
-			}
-		}
-
 		// superscript bracketing
-		position = cm.getCursor();
+		const position = cm.getCursor();
+		const current_line = cm.getLine(position.line)
 		let last_superscript = current_line.lastIndexOf('^',position.ch);
 		while (last_superscript != -1) {
 			const letter_after_superscript = cm.getRange({line:position.line,ch:last_superscript+1},{line:position.line,ch:last_superscript+2});
@@ -149,7 +169,7 @@ export default class QuickLatexPlugin extends Plugin {
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	  ): void => {
-		if (['{','['].contains(event.key)) {
+		if (['{','[','m'].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
 				if (this.withinMath(cm)) {
@@ -160,12 +180,18 @@ export default class QuickLatexPlugin extends Plugin {
 							if (t != '{') {
 								cm.replaceSelection('}','start')
 							};
-							break;
+							return;
 						case '[':		
 							if (t != '[') {
 								cm.replaceSelection(']','start')
 							};
-							break;
+							return;
+						case 'm':
+							if (cm.getRange({line:position.line,ch:position.ch-3},{line:position.line,ch:position.ch-1})=='su') {
+								cm.replaceSelection('\\limits','end')
+							} else {
+								return;
+							}
 					};
 				};
 			};
