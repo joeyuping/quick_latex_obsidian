@@ -71,10 +71,12 @@ export default class QuickLatexPlugin extends Plugin {
 
 							const last_divide = current_line.lastIndexOf('/',position.ch-1);
 							if (last_superscript > last_divide) {
-								this.sup_bracketing(cm, event);
+								this.sup_bracketing(cm, event, last_superscript);
+								return;
+							} else if (last_divide != -1) {
+								this.frac_replace(cm, event, last_superscript);
 								return;
 							} else {
-								this.frac_replace(cm, event);
 								return;
 							}
 
@@ -111,58 +113,55 @@ export default class QuickLatexPlugin extends Plugin {
 
 	private sup_bracketing =(
 		cm:CodeMirror.Editor, 
-		event: KeyboardEvent
+		event: KeyboardEvent,
+		last_superscript: number
 		): void => {
 		// superscript bracketing
 		const position = cm.getCursor();
 		const current_line = cm.getLine(position.line)
-		let last_superscript = current_line.lastIndexOf('^',position.ch);
-		while (last_superscript != -1) {
+		const letter_before_cursor = cm.getRange(
+			{line:position.line,ch:position.ch-1},
+			{line:position.line,ch:position.ch}
+			)
+
+		if (last_superscript != -1) {
 			const letter_after_superscript = cm.getRange({line:position.line,ch:last_superscript+1},{line:position.line,ch:last_superscript+2});
-			if (letter_after_superscript != '{') {
+			if (letter_after_superscript == '(' && letter_before_cursor == ')') {
+				cm.replaceRange('}',{line:position.line,ch:position.ch-1},{line:position.line,ch:position.ch});
+				cm.replaceRange('{',{line:position.line,ch:last_superscript+1},{line:position.line,ch:last_superscript+2});
+				event.preventDefault();
+				return;
+			} else {
 				const last_sub = current_line.indexOf('_',last_superscript)==-1?999:current_line.indexOf('_',last_superscript);
 				const last_divide = current_line.indexOf('/',last_superscript)==-1?999:current_line.indexOf('/',last_superscript);
 				const sup_close_index = Math.min(last_sub, last_divide, position.ch);
 				cm.replaceRange('}',{line:position.line,ch:sup_close_index});
 				cm.replaceRange('{',{line:position.line,ch:last_superscript+1});
 				event.preventDefault();
-				break;
-			} else {
-				last_superscript = current_line.lastIndexOf('^',last_superscript-1)
+				return;
 			}
+		} else {
+			return
 		}
 	}
 
 	private readonly frac_replace = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
+		last_superscript: number
 	): void => {
 		const position = cm.getCursor();
 		const current_line = cm.getLine(position.line);
 		const last_divide = current_line.lastIndexOf('/',position.ch-1);
 
-		const stop_symbols = ['$','=',' ','>','<','^','_']
-		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, position.ch-1))
-		let frac = Math.max(...symbol_positions)
+		const stop_symbols = ['$','=',' ','>','<']
+		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
+		let frac = Math.max(last_superscript, ...symbol_positions)
 
-		const symbol_before_last_divide = cm.getRange(
-			{line:position.line,ch:last_divide-1},
-			{line:position.line,ch:last_divide}
-			)
-		if (last_divide > frac) {
-			if (symbol_before_last_divide==')') {
-				frac = current_line.lastIndexOf('(', last_divide);
-				cm.replaceRange('}',{line:position.line,ch:position.ch});
-				cm.replaceRange('}{',{line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide+1});
-				cm.replaceRange('\\frac{',{line:position.line,ch:frac},{line:position.line,ch:frac+1});
-				event.preventDefault();
-			} else {
-				cm.replaceRange('}',{line:position.line,ch:position.ch});
-				cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
-				cm.replaceRange('\\frac{',{line:position.line,ch:frac+1});
-				event.preventDefault();
-			};
-		};
+		cm.replaceRange('}',{line:position.line,ch:position.ch});
+		cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
+		cm.replaceRange('\\frac{',{line:position.line,ch:frac+1});
+		event.preventDefault();
 	}
 
 	private readonly handleKeyUp = (
