@@ -57,7 +57,7 @@ export default class QuickLatexPlugin extends Plugin {
 							while (last_superscript != -1) {
 								const letter_after_superscript = cm.getRange({line:position.line,ch:last_superscript+1},{line:position.line,ch:last_superscript+2});
 								if (letter_after_superscript == '{') {
-									last_superscript = current_line.lastIndexOf('_', last_superscript-1);
+									last_superscript = current_line.lastIndexOf('^', last_superscript-1);
 								} else {
 									break;
 								}
@@ -132,9 +132,8 @@ export default class QuickLatexPlugin extends Plugin {
 				event.preventDefault();
 				return;
 			} else {
-				const last_sub = current_line.indexOf('_',last_superscript)==-1?999:current_line.indexOf('_',last_superscript);
 				const last_divide = current_line.indexOf('/',last_superscript)==-1?999:current_line.indexOf('/',last_superscript);
-				const sup_close_index = Math.min(last_sub, last_divide, position.ch);
+				const sup_close_index = Math.min(last_divide, position.ch);
 				cm.replaceRange('}',{line:position.line,ch:sup_close_index});
 				cm.replaceRange('{',{line:position.line,ch:last_superscript+1});
 				event.preventDefault();
