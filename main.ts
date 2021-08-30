@@ -165,7 +165,7 @@ export default class QuickLatexPlugin extends Plugin {
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	  ): void => {
-		if (['{','[','m'].contains(event.key)) {
+		if (['{','[','(','m'].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
 				if (this.withinMath(cm)) {
@@ -182,9 +182,15 @@ export default class QuickLatexPlugin extends Plugin {
 								cm.replaceSelection(']','start')
 							};
 							return;
+						case '(':		
+						if (t != '(') {
+							cm.replaceSelection(')','start')
+						};
+							return;
 						case 'm':
 							if (cm.getRange({line:position.line,ch:position.ch-3},{line:position.line,ch:position.ch-1})=='su') {
 								cm.replaceSelection('\\limits','end')
+								return;
 							} else {
 								return;
 							}
