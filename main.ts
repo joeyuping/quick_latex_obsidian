@@ -68,12 +68,12 @@ export default class QuickLatexPlugin extends Plugin {
 							// if (last_6_characters.contains('_')) {
 							// 	this.sub_bracketing(cm, event)
 							// }
-
+							const last_dollar = current_line.lastIndexOf('$',position.ch-1);
 							const last_divide = current_line.lastIndexOf('/',position.ch-1);
 							if (last_superscript > last_divide) {
 								this.sup_bracketing(cm, event, last_superscript);
 								return;
-							} else if (last_divide != -1) {
+							} else if (last_divide > last_dollar) {
 								this.frac_replace(cm, event, last_superscript);
 								return;
 							} else {
@@ -152,11 +152,9 @@ export default class QuickLatexPlugin extends Plugin {
 		const position = cm.getCursor();
 		const current_line = cm.getLine(position.line);
 		const last_divide = current_line.lastIndexOf('/',position.ch-1);
-
 		const stop_symbols = ['$','=',' ','>','<']
 		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
 		let frac = Math.max(last_superscript, ...symbol_positions)
-
 		cm.replaceRange('}',{line:position.line,ch:position.ch});
 		cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
 		cm.replaceRange('\\frac{',{line:position.line,ch:frac+1});
@@ -198,10 +196,44 @@ export default class QuickLatexPlugin extends Plugin {
 
 	private readonly withinMath = (cm:CodeMirror.Editor): Boolean => {
 		// check if cursor within $$
-		const position = cm.getCursor();
+		const position = cm.getCursor()
 		const current_line = cm.getLine(position.line);
-		const last_dollar = current_line.lastIndexOf('$',position.ch-1);
-		return last_dollar!=-1;
+		let cursor_index = position.ch
+		let from = 0;
+		let found = current_line.indexOf('$', from);
+		while (found != -1 && found < cursor_index) {
+			let next_char = cm.getRange({line:position.line,ch:found+1},{line:position.line,ch:found+2})
+			let prev_char = cm.getRange({line:position.line,ch:found-1},{line:position.line,ch:found})
+			if (next_char == '$' || prev_char == '$' || next_char == ' ') {
+				from = found + 1;
+				found = current_line.indexOf('$', from);
+				continue;
+			} else {
+				from = found + 1;
+				let next_found = current_line.indexOf('$', from);
+				if (next_found == -1) {
+					return false;
+				} else if (cursor_index > found && cursor_index <= next_found) {
+					return true;
+				} else {
+					from = next_found + 1;
+					found = current_line.indexOf('$', from);
+					continue;
+				}
+			}
+		}
+
+		const document_text = cm.getValue();
+		cursor_index = cm.indexFromPos(position);
+		from = 0;
+		found = document_text.indexOf('$$', from);
+		let count = 0;
+		while (found != -1 && found < cursor_index) {
+			count += 1;
+			from = found + 1;
+			found = document_text.indexOf('$$', from);
+		}
+		return count % 2 == 1;
 	}
 
 }
