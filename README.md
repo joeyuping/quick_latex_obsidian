@@ -15,8 +15,9 @@ This is a very simple plugin to simplify latex math typing such as fraction and 
 * Currently do not support multiline latex
 
 Future:
-- [X] - more robust checking whether cursor is within $$
-- [ ] - set custom shorthand for common symbols such as \sigma
+- [X] more robust checking whether cursor is within $$
+- [ ] automatically add "\left" and "\right" to brackets when a white space is pressed within the brackets which contains \frac, \int, \sum...
+- [ ] set custom shorthand for common symbols such as \sigma
 
 ### source code
 see https://github.com/joeyuping/quick_latex_obsidian
