@@ -16,8 +16,9 @@ This is a very simple plugin to simplify latex math typing such as fraction and 
 
 Future:
 - [X] more robust checking whether cursor is within $$
-- [ ] automatically add "\left" and "\right" to brackets when a white space is pressed within the brackets which contains \frac, \int, \sum...
+- [X] automatically add "\left" and "\right" to brackets which contains \frac, \int, \sum... when a "space" key is pressed within the brackets.
 - [ ] set custom shorthand for common symbols such as \sigma
+- [ ] add a settings page to allow toggling the various functions
 
 ### source code
 see https://github.com/joeyuping/quick_latex_obsidian

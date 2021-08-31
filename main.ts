@@ -26,6 +26,7 @@ export default class QuickLatexPlugin extends Plugin {
 		  });
 	}
 
+	//triggering functions
 	private readonly handleKeyUp = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
@@ -105,27 +106,28 @@ export default class QuickLatexPlugin extends Plugin {
 							const last_dollar = current_line.lastIndexOf('$',position.ch-1);
 							const last_divide = current_line.lastIndexOf('/',position.ch-1);
 							if (last_superscript > last_divide) {
-								this.sup_bracketing(cm, event, last_superscript);
-								return;
+								this.supBracketing(cm, event, last_superscript);
+								break;
 							} else if (last_divide > last_dollar) {
 								const brackets = [['(',')'],['{','}'],['[',']']];
-								// if any brackets in denominator still unclosed, dont do frac_replace yet
+								// if any brackets in denominator still unclosed, dont do fracReplace yet
 								if (brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, last_divide)[0])) {
-									return;
+									break;
 								} else {
-									this.frac_replace(cm, event, last_superscript);
-									return;
+									this.fracReplace(cm, event, last_superscript);
+									break;
 								}
-							} else {
-								return;
-							}
-						}
+							};
+
+							this.autoLargeBracket(cm, event)
+						};
 				};
 			};
 		};
 	};
 
-	private readonly sup_bracketing =(
+	//main functions
+	private readonly supBracketing =(
 		cm:CodeMirror.Editor, 
 		event: KeyboardEvent,
 		last_superscript: number
@@ -156,9 +158,9 @@ export default class QuickLatexPlugin extends Plugin {
 		} else {
 			return
 		}
-	}
+	};
 
-	private readonly frac_replace = (
+	private readonly fracReplace = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 		last_superscript: number
@@ -171,7 +173,7 @@ export default class QuickLatexPlugin extends Plugin {
 		const brackets = [['(',')'],['{','}'],['[',']']];
 		let stop_brackets = []
 		for (let i = 0; i < brackets.length; i++) {
-			stop_brackets.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, -1)[1])
+			stop_brackets.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, 0)[1])
 		}
 
 		const stop_symbols = ['$','=',' ','>','<']
@@ -202,8 +204,51 @@ export default class QuickLatexPlugin extends Plugin {
 		cm.replaceRange('}{',{line:position.line,ch:last_divide-numerator_remove_bracket},{line:position.line,ch:last_divide+1+denominator_remove_bracket});
 		cm.replaceRange('\\frac{',{line:position.line,ch:frac+1},{line:position.line,ch:frac+1+numerator_remove_bracket});
 		event.preventDefault();
-	}
+	};
 
+	private readonly autoLargeBracket = (
+		cm: CodeMirror.Editor,
+		event: KeyboardEvent,
+	):void => {
+		const position = cm.getCursor();
+		const current_line = cm.getLine(position.line);
+		const brackets = [['[',']'],['(',')']];
+		let left_array:number[] = [];
+		let right_array:number[] = []
+		for (let i = 0 ; i < brackets.length ; i++) {
+			left_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], position.ch, 0)[1])
+			right_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], current_line.length, position.ch, false)[1])
+		}
+		new Notice('left'+left_array.toString())
+		new Notice('right'+right_array.toString())
+		if (left_array.length > 0 || right_array.length > 0) {
+			const large_operators = ['\\sum','\\int','\\frac'];
+			if (
+				large_operators.some(e => current_line.indexOf(e,position.ch)<right_array[right_array.length-1] &&
+									current_line.lastIndexOf(e,position.ch)>left_array[0])==true
+			){
+				new Notice('check')
+				for (let k = right_array.length-1 ; k > -1 ; k--) {
+					// check if unclosed brackets already appended with \right 
+					let check_right = cm.getRange({line:position.line,ch:right_array[k]+1},{line:position.line,ch:right_array[k]+7});
+					if (check_right != '\\right') {
+						cm.replaceRange('\\right',{line:position.line,ch:right_array[k]});
+					};
+				};	
+
+				for (let j = left_array.length-1 ; j > -1 ; j--) {
+					// check if unclosed brackets already appended with \left
+					let check_left = cm.getRange({line:position.line,ch:left_array[j]-5},{line:position.line,ch:left_array[j]});
+					if (check_left != '\\left') {
+						cm.replaceRange('\\left',{line:position.line,ch:left_array[j]});
+					};
+				};
+				event.preventDefault();
+			};
+		};
+	};
+	
+	//utility functions
 	private readonly unclosed_bracket = (
 		cm: CodeMirror.Editor,
 		open_symbol: string,
@@ -214,8 +259,8 @@ export default class QuickLatexPlugin extends Plugin {
 	): [boolean, number[]] => {
 		// determine if there are unclosed bracket within the same line before the cursor position
 		const position = cm.getCursor();
-		const text = cm.getRange({line:position.line,ch:after+1},{line:position.line,ch:before});
-		
+		const text = cm.getRange({line:position.line,ch:after},{line:position.line,ch:before});
+		new Notice('text'+text.toString())
 		let open_array:number[] = []
 		let close_array:number[] = []
 
@@ -243,7 +288,7 @@ export default class QuickLatexPlugin extends Plugin {
 			return [close_array.length>0, close_array];
 		}
 		
-	}
+	};
 
 	private readonly withinMath = (cm:CodeMirror.Editor): Boolean => {
 		// check if cursor within $$
@@ -285,7 +330,7 @@ export default class QuickLatexPlugin extends Plugin {
 			found = document_text.indexOf('$$', from);
 		}
 		return count % 2 == 1;
-	}
+	};
 
 	private readonly withinAnyBrackets = (
 		cm:CodeMirror.Editor,
@@ -293,10 +338,9 @@ export default class QuickLatexPlugin extends Plugin {
 		): Boolean => {
 		const position = cm.getCursor()
 		const current_line = cm.getLine(position.line);
-		return brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch,-1)[0] && 
+		return brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, 0)[0] && 
 		this.unclosed_bracket(cm, e[0], e[1], current_line.length, position.ch, false)[0]) 
-		}
+	};
 
-
-}
+};
 
