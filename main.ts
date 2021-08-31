@@ -74,14 +74,16 @@ export default class QuickLatexPlugin extends Plugin {
 								this.sup_bracketing(cm, event, last_superscript);
 								return;
 							} else if (last_divide > last_dollar) {
-								this.frac_replace(cm, event, last_superscript);
-								return;
+								const brackets = [['(',')'],['{','}'],['[',']']];
+								if (brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, last_divide))) {
+									return;
+								} else {
+									this.frac_replace(cm, event, last_superscript);
+									return;
+								}
 							} else {
 								return;
 							}
-
-
-
 						}
 				};
 			};
@@ -152,13 +154,67 @@ export default class QuickLatexPlugin extends Plugin {
 		const position = cm.getCursor();
 		const current_line = cm.getLine(position.line);
 		const last_divide = current_line.lastIndexOf('/',position.ch-1);
-		const stop_symbols = ['$','=',' ','>','<']
+
+		// if there are any brackets unclosed before divide symbol, \frac should be placed after the symbol
+		const brackets = [['(',')'],['{','}'],['[',']']];
+		let add_stop_bracket = []
+		for (let i = 0; i < brackets.length; i++) {
+			if (this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, -1)) {
+				add_stop_bracket.push(brackets[i][0])
+			}
+		}
+
+		const stop_symbols = ['$','=',' ','>','<',...add_stop_bracket]
 		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
 		let frac = Math.max(last_superscript, ...symbol_positions)
 		cm.replaceRange('}',{line:position.line,ch:position.ch});
 		cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
 		cm.replaceRange('\\frac{',{line:position.line,ch:frac+1});
 		event.preventDefault();
+	}
+
+	private readonly unclosed_bracket = (
+		cm: CodeMirror.Editor,
+		open_symbol: string,
+		close_symbol: string,
+		before: number,
+		after: number,
+		unclosed_open_symbol: boolean=true
+	): boolean => {
+		// determine if there are unclosed bracket within the same line before the cursor position
+		const position = cm.getCursor();
+		const current_line = cm.getLine(position.line);
+
+		// count number of open symbol before cursor
+		let from = 0;
+		let found_open_symbol = current_line.indexOf(open_symbol, from);
+		let count_open_symbol = 0;
+		while (found_open_symbol != -1 && found_open_symbol < before) {
+			if (found_open_symbol > after) {
+				count_open_symbol += 1;
+			}
+			from = found_open_symbol + 1;
+			found_open_symbol = current_line.indexOf(open_symbol, from);
+		};
+
+		// count number of close symbol before cursor
+		from = 0;
+		let found_close_symbol = current_line.indexOf(close_symbol, from);
+		let count_close_symbol = 0;
+		while (found_close_symbol != -1 && found_close_symbol < before) {
+			if (found_close_symbol > after) {
+				count_close_symbol += 1;
+			}
+			from = found_close_symbol + 1;
+			found_close_symbol = current_line.indexOf(close_symbol, from);
+		};
+
+		if (unclosed_open_symbol) {
+			return count_open_symbol > count_close_symbol;
+		} else {
+			return count_close_symbol > count_open_symbol
+		}
+		
 	}
 
 	private readonly handleKeyUp = (
@@ -170,22 +226,22 @@ export default class QuickLatexPlugin extends Plugin {
 			if (activeLeaf.view instanceof MarkdownView) {
 				if (this.withinMath(cm)) {
 					const position = cm.getCursor();
-					const t = cm.getRange({line:position.line,ch:position.ch-2},{line:position.line,ch:position.ch-1})
+					const brackets = [['(',')'],['{','}'],['[',']']];
 					switch (event.key) {
 						case '{':		
-							if (t != '{') {
+							if (!this.withinAnyBrackets(cm,brackets)) {
 								cm.replaceSelection('}','start')
 							};
 							return;
 						case '[':		
-							if (t != '[') {
+							if (!this.withinAnyBrackets(cm,brackets)) {
 								cm.replaceSelection(']','start')
 							};
 							return;
 						case '(':		
-						if (t != '(') {
-							cm.replaceSelection(')','start')
-						};
+							if (!this.withinAnyBrackets(cm,brackets)) {
+								cm.replaceSelection(')','start')
+							};
 							return;
 						case 'm':
 							if (cm.getRange({line:position.line,ch:position.ch-3},{line:position.line,ch:position.ch-1})=='su') {
@@ -241,6 +297,17 @@ export default class QuickLatexPlugin extends Plugin {
 		}
 		return count % 2 == 1;
 	}
+
+	private readonly withinAnyBrackets = (
+		cm:CodeMirror.Editor,
+		brackets: string[][]
+		): Boolean => {
+		const position = cm.getCursor()
+		const current_line = cm.getLine(position.line);
+		return brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch,-1) && 
+		this.unclosed_bracket(cm, e[0], e[1], current_line.length, position.ch, false)) 
+		}
+
 
 }
 
