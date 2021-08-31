@@ -1,7 +1,7 @@
 {
 	"id": "quick-latex",
 	"name": "Quick Latex for Obsidian",
-	"version": "1.0.6",
+	"version": "1.1.0",
 	"minAppVersion": "0.9.12",
 	"description": "A very simple plugin to simplify latex math fraction and bracket typing.",
 	"author": "joeyuping",
