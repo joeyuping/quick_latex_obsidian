@@ -219,15 +219,12 @@ export default class QuickLatexPlugin extends Plugin {
 			left_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], position.ch, 0)[1])
 			right_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], current_line.length, position.ch, false)[1])
 		}
-		new Notice('left'+left_array.toString())
-		new Notice('right'+right_array.toString())
 		if (left_array.length > 0 || right_array.length > 0) {
 			const large_operators = ['\\sum','\\int','\\frac'];
 			if (
 				large_operators.some(e => current_line.indexOf(e,position.ch)<right_array[right_array.length-1] &&
 									current_line.lastIndexOf(e,position.ch)>left_array[0])==true
 			){
-				new Notice('check')
 				for (let k = right_array.length-1 ; k > -1 ; k--) {
 					// check if unclosed brackets already appended with \right 
 					let check_right = cm.getRange({line:position.line,ch:right_array[k]+1},{line:position.line,ch:right_array[k]+7});
@@ -260,7 +257,6 @@ export default class QuickLatexPlugin extends Plugin {
 		// determine if there are unclosed bracket within the same line before the cursor position
 		const position = cm.getCursor();
 		const text = cm.getRange({line:position.line,ch:after},{line:position.line,ch:before});
-		new Notice('text'+text.toString())
 		let open_array:number[] = []
 		let close_array:number[] = []
 
