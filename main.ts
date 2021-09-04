@@ -85,10 +85,11 @@ export default class QuickLatexPlugin extends Plugin {
 						} else if (t_2 == '$$') {
 							cm.setCursor({line: position.line,ch:position.ch-1})
 						};
-						break;
+						return;
 
 					case ' ':
 						if (this.withinMath(cm)) {
+
 							const position = cm.getCursor();
 							const current_line = cm.getLine(position.line);
 
@@ -107,19 +108,22 @@ export default class QuickLatexPlugin extends Plugin {
 							const last_divide = current_line.lastIndexOf('/',position.ch-1);
 							if (last_superscript > last_divide) {
 								this.supBracketing(cm, event, last_superscript);
-								break;
-							} else if (last_divide > last_dollar) {
-								const brackets = [['(',')'],['{','}'],['[',']']];
-								// if any brackets in denominator still unclosed, dont do fracReplace yet
-								if (brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, last_divide)[0])) {
-									break;
-								} else {
-									this.fracReplace(cm, event, last_superscript);
-									break;
-								}
+								return;
 							};
 
-							this.autoLargeBracket(cm, event)
+							if (last_divide > last_dollar) {
+								const brackets = [['(',')'],['{','}'],['[',']']];
+								// if any brackets in denominator still unclosed, dont do fracReplace yet
+								if (!brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, last_divide)[0])) {
+									this.fracReplace(cm, event, last_superscript);
+								};
+							};
+							
+							let symbol_before = cm.getRange({line:position.line,ch:position.ch-1},{line:position.line,ch:position.ch})
+							if ( symbol_before == ')' || symbol_before == ']') {
+								this.autoLargeBracket(cm, event);
+								return;
+							};
 						};
 				};
 			};
@@ -176,13 +180,17 @@ export default class QuickLatexPlugin extends Plugin {
 			stop_brackets.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, 0)[1])
 		}
 
-		const stop_symbols = ['$','=',' ','>','<']
+		const stop_symbols = ['$','=','>','<'] // space not included?
 		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
 		let frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
 
-		// if numerator is enclosed by (), remove ()
-		const numerator = cm.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide})
+		// if numerator is enclosed by (), place frac in front of () and remove ()
+		let numerator = cm.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
 		let numerator_remove_bracket = 0
+		while (numerator[0] == ' ') {
+			frac += 1;
+			numerator = cm.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
+		}
 		if (numerator[0] == '(' && 
 			numerator[numerator.length-1] == ')' && 
 			numerator.indexOf('(',1) <= numerator.indexOf(')',1) 
@@ -216,20 +224,21 @@ export default class QuickLatexPlugin extends Plugin {
 		let left_array:number[] = [];
 		let right_array:number[] = []
 		for (let i = 0 ; i < brackets.length ; i++) {
-			left_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], position.ch, 0)[1])
-			right_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], current_line.length, position.ch, false)[1])
+			left_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], position.ch-1, 0)[1])
+			right_array.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], current_line.length, position.ch-1, false)[1])
 		}
 		if (left_array.length > 0 || right_array.length > 0) {
 			const large_operators = ['\\sum','\\int','\\frac'];
 			if (
-				large_operators.some(e => current_line.indexOf(e,position.ch)<right_array[right_array.length-1] &&
-									current_line.lastIndexOf(e,position.ch)>left_array[0])==true
+				large_operators.some(e => current_line.lastIndexOf(e,position.ch-1)>left_array[0])==true
 			){
 				for (let k = right_array.length-1 ; k > -1 ; k--) {
 					// check if unclosed brackets already appended with \right 
-					let check_right = cm.getRange({line:position.line,ch:right_array[k]+1},{line:position.line,ch:right_array[k]+7});
+					let check_right = cm.getRange({line:position.line,ch:right_array[k]-6},{line:position.line,ch:right_array[k]});
 					if (check_right != '\\right') {
 						cm.replaceRange('\\right',{line:position.line,ch:right_array[k]});
+					} else {
+						return;
 					};
 				};	
 
@@ -238,6 +247,8 @@ export default class QuickLatexPlugin extends Plugin {
 					let check_left = cm.getRange({line:position.line,ch:left_array[j]-5},{line:position.line,ch:left_array[j]});
 					if (check_left != '\\left') {
 						cm.replaceRange('\\left',{line:position.line,ch:left_array[j]});
+					} else {
+						return;
 					};
 				};
 				event.preventDefault();
