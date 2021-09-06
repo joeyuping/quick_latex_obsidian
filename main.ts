@@ -185,7 +185,14 @@ export default class QuickLatexPlugin extends Plugin {
 		let frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
 
 		// if numerator is enclosed by (), place frac in front of () and remove ()
-		let numerator = cm.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
+		let numerator:string;
+		if (cm.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide}) == ')') {
+			const open_bracket = this.unclosed_bracket(cm,'(',')',last_divide-1,frac)
+			numerator = cm.getRange({line:position.line,ch:open_bracket[1][open_bracket[1].length-1]},{line:position.line,ch:last_divide});
+			frac = open_bracket[1][open_bracket[1].length-1]-1;
+		} else {
+			numerator = cm.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
+		}
 		let numerator_remove_bracket = 0
 		while (numerator[0] == ' ') {
 			frac += 1;
@@ -265,12 +272,11 @@ export default class QuickLatexPlugin extends Plugin {
 		after: number,
 		unclosed_open_symbol: boolean=true //false for unclosed_close_symbol
 	): [boolean, number[]] => {
-		// determine if there are unclosed bracket within the same line before the cursor position
+		// determine if there are unclosed bracket within the same line before the reference positionu
 		const position = cm.getCursor();
 		const text = cm.getRange({line:position.line,ch:after},{line:position.line,ch:before});
 		let open_array:number[] = []
 		let close_array:number[] = []
-
 		for (let i = 0 ; i < text.length ; i++) {
 			switch (text[i]) {
 				case open_symbol:
