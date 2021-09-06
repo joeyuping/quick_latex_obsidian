@@ -14,6 +14,7 @@ export default class QuickLatexPlugin extends Plugin {
 			this.cmEditors.push(cm);
 			cm.on('keypress', this.handleKeyPress);
 			cm.on('keyup',this.handleKeyUp);
+			cm.on('keydown',this.handleKeyDown);
 		})
 	}
 
@@ -27,10 +28,39 @@ export default class QuickLatexPlugin extends Plugin {
 	}
 
 	//triggering functions
+	private readonly handleKeyDown = (
+		cm: CodeMirror.Editor,
+		event: KeyboardEvent,
+	  ): void => {
+		if (event.altKey){
+			if (event.key=='a') {
+				let position = cm.getCursor();
+				const selected_text = (cm.getSelection() != '') ? cm.getSelection()+'\n' : '';
+				cm.replaceSelection('\\begin{align*}\n'+selected_text+'\n\\end{align*}','end');
+				position = cm.getCursor();
+				cm.setCursor({line:position.line-1,ch:0})
+				event.preventDefault()
+			}
+			event.preventDefault()
+		}
+		if (event.key=='Enter'){
+			if (this.withinAnyBrackets_document(cm, '\\begin{align','\\end{align')){
+				if(!event.shiftKey) {
+					cm.replaceSelection('\\\\\n&')
+					event.preventDefault();
+				} else {
+					return;
+				};
+				
+			};
+		};
+	};
+	
 	private readonly handleKeyUp = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	  ): void => {
+
 		if (['{','[','(','m'].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
@@ -39,17 +69,17 @@ export default class QuickLatexPlugin extends Plugin {
 					const brackets = [['(',')'],['{','}'],['[',']']];
 					switch (event.key) {
 						case '{':		
-							if (!this.withinAnyBrackets(cm,brackets)) {
+							if (!this.withinAnyBrackets_inline(cm,brackets)) {
 								cm.replaceSelection('}','start')
 							};
 							return;
 						case '[':		
-							if (!this.withinAnyBrackets(cm,brackets)) {
+							if (!this.withinAnyBrackets_inline(cm,brackets)) {
 								cm.replaceSelection(']','start')
 							};
 							return;
 						case '(':		
-							if (!this.withinAnyBrackets(cm,brackets)) {
+							if (!this.withinAnyBrackets_inline(cm,brackets)) {
 								cm.replaceSelection(')','start')
 							};
 							return;
@@ -70,7 +100,8 @@ export default class QuickLatexPlugin extends Plugin {
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	  ): void => {
-		if (['$',' '].contains(event.key)) {
+
+		if (['$',' ','Enter'].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
 				
@@ -125,9 +156,11 @@ export default class QuickLatexPlugin extends Plugin {
 								return;
 							};
 						};
+
 				};
 			};
 		};
+					
 	};
 
 	//main functions
@@ -345,7 +378,7 @@ export default class QuickLatexPlugin extends Plugin {
 		return count % 2 == 1;
 	};
 
-	private readonly withinAnyBrackets = (
+	private readonly withinAnyBrackets_inline = (
 		cm:CodeMirror.Editor,
 		brackets: string[][]
 		): Boolean => {
@@ -353,6 +386,40 @@ export default class QuickLatexPlugin extends Plugin {
 		const current_line = cm.getLine(position.line);
 		return brackets.some(e => this.unclosed_bracket(cm, e[0], e[1], position.ch, 0)[0] && 
 		this.unclosed_bracket(cm, e[0], e[1], current_line.length, position.ch, false)[0]) 
+	};
+
+	private readonly withinAnyBrackets_document = (
+		cm:CodeMirror.Editor,
+		open_symbol: string,
+		close_symbol: string
+		): Boolean => {
+			const document_text = cm.getValue();
+			const position = cm.getCursor()
+			let cursor_index = cm.indexFromPos(position);
+			
+			// count open symbols
+			let from = 0;
+			let found = document_text.indexOf(open_symbol, from);
+			let count = 0;
+			while (found != -1 && found < cursor_index) {
+				count += 1;
+				from = found + 1;
+				found = document_text.indexOf(open_symbol, from);
+			}
+			const open_symbol_counts = count
+
+			// count close symbols
+			from = 0;
+			found = document_text.indexOf(close_symbol, from);
+			count = 0;
+			while (found != -1 && found < cursor_index) {
+				count += 1;
+				from = found + 1;
+				found = document_text.indexOf(close_symbol, from);
+			}
+			const close_symbol_counts = count
+
+			return open_symbol_counts > close_symbol_counts;
 	};
 
 };
