@@ -33,16 +33,25 @@ export default class QuickLatexPlugin extends Plugin {
 		event: KeyboardEvent,
 	  ): void => {
 		if (event.altKey){
-			if (event.key=='a') {
-				let position = cm.getCursor();
-				const selected_text = (cm.getSelection() != '') ? cm.getSelection()+'\n' : '';
-				cm.replaceSelection('\\begin{align*}\n'+selected_text+'\n\\end{align*}','end');
-				position = cm.getCursor();
-				cm.setCursor({line:position.line-1,ch:0})
-				event.preventDefault()
-			}
-			event.preventDefault()
-		}
+			let position = cm.getCursor();
+			switch (event.key) {
+				case 'a':
+					const selected_text = (cm.getSelection() != '') ? cm.getSelection()+'\n' : '';
+					cm.replaceSelection('\\begin{align*}\n'+selected_text+'\n\\end{align*}','end');
+					position = cm.getCursor();
+					cm.setCursor({line:position.line-1,ch:0})
+					event.preventDefault()
+					break;
+				
+				case 'm':
+					cm.replaceSelection('\\begin{pmatrix}\\end{pmatrix}','start');
+					position = cm.getCursor();
+					cm.setCursor({line:position.line,ch:position.ch+15})
+					event.preventDefault()
+					break;
+			};
+		};
+
 		if (event.key=='Enter'){
 			if (this.withinAnyBrackets_document(cm, '\\begin{align','\\end{align')){
 				if(!event.shiftKey) {
@@ -52,7 +61,21 @@ export default class QuickLatexPlugin extends Plugin {
 					return;
 				};
 				
+			} else if (this.withinAnyBrackets_document(cm, '\\begin{pmatrix}','\\end{pmatrix}')){
+				if(!event.shiftKey) {
+					cm.replaceSelection(' \\\\ ','end')
+					event.preventDefault();
+				} else {
+					return;
+				};
 			};
+		};
+
+		if (event.key=='Tab') {
+			if (this.withinAnyBrackets_document(cm, '\\begin{pmatrix}','\\end{pmatrix}')){
+				cm.replaceSelection(' & ','end')
+				event.preventDefault();
+			}
 		};
 	};
 	
