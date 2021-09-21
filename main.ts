@@ -236,7 +236,7 @@ export default class QuickLatexPlugin extends Plugin {
 			stop_brackets.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, 0)[1])
 		}
 
-		const stop_symbols = ['$','=','>','<'] // space not included?
+		const stop_symbols = ['$','=','>','<',','] // space not included?
 		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
 		let frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
 
