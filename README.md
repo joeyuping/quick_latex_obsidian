@@ -7,6 +7,7 @@ This simple plugin added various shortcut to simplify and speedup latex math typ
 
 **1. Move cursor in between \$\$**
 * Typing two consecutive **\$\$** will automatically shift the cursor in between the **\$\$**.  
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif)
 
 **2. Autoclose {}, [], () brackets**
 * Typing **"{"**, **"["** and **"("** will automatically close with **"}"**,**"]"** or **")"**.  
@@ -16,9 +17,11 @@ This simple plugin added various shortcut to simplify and speedup latex math typ
 
 **4. Auto enlarge brackets that contains \sum, \int or \frac**  
 * Place cursor right after a () or [] bracketed expression that contains either \sum, \int or \frac and press the space key, the outermost brackets will be appended with \left and \right in order to display larger brackets to enclose these big expressions. E.g. (\sum\limits_{i=1}^n x+1) => **\left**(\sum\limits_{i=1}^n x+1 **\right**) : $(\sum\limits_{i=1}^n x+1)$ => $\left(\sum\limits_{i=1}^n x+1\right)$
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/enlarge%20bracket.gif)
 
 **5. Auto enclose expression after superscipt with {}**
 * Typing expressions after superscript **"^"** symbol follow by a **"space" key** will automatically surround the expressions with **"{}"**.  
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/superscript.gif)
 
 **6. Type "/" instead of \frac{}{}.**  
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$** and display $\frac{e}{2}$  
@@ -26,6 +29,9 @@ This simple plugin added various shortcut to simplify and speedup latex math typ
 **Tip 2:** for longer numerator or denominator expressions (especially when the expressions have white spaces which may trigger the frac-replace prematurely), enclose the expression in round brackets **()**.  
 **Tip 3:** The plugin will remove the outermost brackets in numerator and denominator.  
 E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lambda n}$ instead of $\frac{1}{(\lambda n)}$
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac1.gif)
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac2.gif)
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac3.gif)
 
 **7. shortcut for align block**
 * use "Alt+a" shortcut key to quickly insert **\begin{align\*} \end{align\*}** block  
@@ -33,6 +39,7 @@ E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lamb
 **Tip 2: quick next line syntax within align block**
     * pressing **"enter"** within a \begin{align} \end{align} block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/align%20block.gif)
 
 **8. shortcut for matrix block**
 * use "Alt+m" shortcut key to quickly insert **\begin{pmatrix} \end{pmatrix}** block  
@@ -40,7 +47,7 @@ E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lamb
     * pressing **"tab"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" & "**.
     * pressing **"enter"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" \\\\ "**.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
-    
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/matrix%20block.gif)
 
 ---
 **Note:**
