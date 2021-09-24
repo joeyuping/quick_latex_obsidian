@@ -53,17 +53,16 @@ export default class QuickLatexPlugin extends Plugin {
 		};
 
 		if (event.key=='Enter'){
-			if (this.withinAnyBrackets_document(cm, '\\begin{align','\\end{align')){
+			if (this.withinAnyBrackets_document(cm, '\\begin{pmatrix}','\\end{pmatrix}')){
 				if(!event.shiftKey) {
-					cm.replaceSelection('\\\\\n&')
+					cm.replaceSelection(' \\\\ ','end')
 					event.preventDefault();
 				} else {
 					return;
 				};
-				
-			} else if (this.withinAnyBrackets_document(cm, '\\begin{pmatrix}','\\end{pmatrix}')){
+			} else if (this.withinAnyBrackets_document(cm, '\\begin{align','\\end{align')){
 				if(!event.shiftKey) {
-					cm.replaceSelection(' \\\\ ','end')
+					cm.replaceSelection('\\\\\n&')
 					event.preventDefault();
 				} else {
 					return;
@@ -124,7 +123,7 @@ export default class QuickLatexPlugin extends Plugin {
 		event: KeyboardEvent,
 	  ): void => {
 
-		if (['$',' ','Enter'].contains(event.key)) {
+		if (['$',' '].contains(event.key)) {
 			const activeLeaf = this.app.workspace.activeLeaf;
 			if (activeLeaf.view instanceof MarkdownView) {
 				
