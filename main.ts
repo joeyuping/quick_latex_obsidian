@@ -159,7 +159,10 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 
 							const last_dollar = current_line.lastIndexOf('$',position.ch-1);
-							const last_divide = current_line.lastIndexOf('/',position.ch-1);
+							let last_divide = current_line.lastIndexOf('/',position.ch-1);
+							while (cm.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide})=='\\') {
+								last_divide = current_line.lastIndexOf('/',last_divide-1);
+							}
 							if (last_superscript > last_divide) {
 								this.supBracketing(cm, event, last_superscript);
 								return;
@@ -227,17 +230,38 @@ export default class QuickLatexPlugin extends Plugin {
 	): void => {
 		const position = cm.getCursor();
 		const current_line = cm.getLine(position.line);
-		const last_divide = current_line.lastIndexOf('/',position.ch-1);
+		let last_divide = current_line.lastIndexOf('/',position.ch-1);
+		while (cm.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide})=='\\') {
+			last_divide = current_line.lastIndexOf('/',last_divide-1);
+		}
+		
 
-		// if there are any brackets unclosed before divide symbol, \frac should be placed after the symbol
+		// if cursor is preceeded by a close bracket, and the corresponding open bracket is found before "/", remove the brackets and enclose whole expression using \frac
+		const letter_before_cursor = cm.getRange(
+			{line:position.line,ch:position.ch-1},
+			{line:position.line,ch:position.ch}
+			)
+
+		// if there are any brackets unclosed before divide symbol, include the open brackets into stop_symbols
 		const brackets = [['(',')'],['{','}'],['[',']']];
 		let stop_brackets = []
 		for (let i = 0; i < brackets.length; i++) {
+			if (letter_before_cursor == brackets[i][1]) {
+				const open_brackets = this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], position.ch-1, 0)[1]
+				const pos_of_the_open_bracket = open_brackets[open_brackets.length-1]
+				if (pos_of_the_open_bracket < last_divide){
+					cm.replaceRange('}',{line:position.line,ch:position.ch-1},{line:position.line,ch:position.ch});
+					cm.replaceRange('}{',{line:position.line,ch:last_divide},{line:position.line,ch:last_divide+1});
+					cm.replaceRange('\\frac{',{line:position.line,ch:pos_of_the_open_bracket},{line:position.line,ch:pos_of_the_open_bracket+1});
+					event.preventDefault();
+					return;
+				} 
+			}
 			stop_brackets.push(...this.unclosed_bracket(cm, brackets[i][0], brackets[i][1], last_divide, 0)[1])
 		}
 
-		const stop_symbols = ['$','=','>','<',','] // space not included?
-		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide))
+		const stop_symbols = ['$','=','>','<',',','/'] // space not included?
+		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide-1))
 		let frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
 
 		// if numerator is enclosed by (), place frac in front of () and remove ()
@@ -271,6 +295,7 @@ export default class QuickLatexPlugin extends Plugin {
 			denominator_remove_bracket = 1
 		}
 
+		// perform \frac replace
 		cm.replaceRange('}',{line:position.line,ch:position.ch-denominator_remove_bracket},{line:position.line,ch:position.ch});
 		cm.replaceRange('}{',{line:position.line,ch:last_divide-numerator_remove_bracket},{line:position.line,ch:last_divide+1+denominator_remove_bracket});
 		cm.replaceRange('\\frac{',{line:position.line,ch:frac+1},{line:position.line,ch:frac+1+numerator_remove_bracket});
