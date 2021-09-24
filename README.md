@@ -1,11 +1,11 @@
 # Quick Latex for Obsidian
 
 ## Description:
-This is a very simple plugin to simplify latex math typing such as fraction and brackets.
+This simple plugin added various shortcut to simplify and speedup latex math typing.
 
 ## Functionalities:
 
-**1. Move cursor in Between \$\$**
+**1. Move cursor in between \$\$**
 * Typing two consecutive **\$\$** will automatically shift the cursor in between the **\$\$**.  
 
 **2. Autoclose {}, [], () brackets**
@@ -22,17 +22,25 @@ This is a very simple plugin to simplify latex math typing such as fraction and 
 
 **6. Type "/" instead of \frac{}{}.**  
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$** and display $\frac{e}{2}$  
-**Tip 1:** for longer numerator or denominator expressions (especially when the expressions have white spaces which may trigger the frac-replace prematurely), enclose the expression in round brackets **()**.   
-**Tip 2:** The plugin will remove the outermost brackets in numerator and denominator.  
+**Tip 1:** enclose your fraction expression within round brackets () will help the system identify the boundaries of your fraction.
+**Tip 2:** for longer numerator or denominator expressions (especially when the expressions have white spaces which may trigger the frac-replace prematurely), enclose the expression in round brackets **()**.  
+**Tip 3:** The plugin will remove the outermost brackets in numerator and denominator.  
 E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lambda n}$ instead of $\frac{1}{(\lambda n)}$
 
 **7. shortcut for align block**
-* use "Alt+a" shortcut key to quickly insert \begin{align\*} \end{align\*} block  
-**Tip 1:** if you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press **"Alt+a"**
+* use "Alt+a" shortcut key to quickly insert **\begin{align\*} \end{align\*}** block  
+**Tip 1:** if you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press **"Alt+a"**.  
+**Tip 2: quick next line syntax within align block**
+    * pressing **"enter"** within a \begin{align} \end{align} block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
+    * press **"shift+enter"** to go to next line **without** adding these symbols.
 
-**8. quick next line syntax within align block**
-* pressing **"enter"** within a \begin{align} \end{align} block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
-* press **"shift+enter"** to go to next line **without** adding these symbols.
+**8. shortcut for matrix block**
+* use "Alt+m" shortcut key to quickly insert **\begin{pmatrix} \end{pmatrix}** block  
+**Tip 1: quick next item and next line syntax within pmatrix block**
+    * pressing **"tab"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" & "**.
+    * pressing **"enter"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" \\\\ "**.
+    * press **"shift+enter"** to go to next line **without** adding these symbols.
+    
 
 ---
 **Note:**
@@ -41,10 +49,7 @@ E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lamb
 
 ---
 **Future:**
-- [X] more robust checking whether cursor is within $$
-- [X] automatically add "\left" and "\right" to brackets which contains \frac, \int, \sum... when a "space" key is pressed within the brackets.
-- [X] added shortcut for \begin{align\*} \end{align\*} block.
-- [ ] set custom shorthand for common symbols such as \sigma
+- [ ] set custom shorthand for common symbols such as \sigma, \lambda
 - [ ] add a settings page to allow toggling the various functions
 
 ### source code
