@@ -39,17 +39,17 @@ export default class QuickLatexPlugin extends Plugin {
 			let position = editor.getCursor();
 			switch (event.key) {
 				case 'a':
-					const selected_text = (editor.getSelection() != '') ? editor.getSelection()+'\n' : '';
-					cm.replaceSelection('\\begin{align*}\n'+selected_text+'\\end{align*}','end');
+					const selected_text = editor.getSelection()
+					editor.replaceSelection('\\begin{align*}\n'+selected_text+'\n\\end{align*}');
 					position = editor.getCursor();
 					editor.setCursor({line:position.line-1,ch:editor.getLine(position.line-1).length})
 					event.preventDefault()
 					break;
 				
 				case 'm':
-					cm.replaceSelection('\\begin{pmatrix}\\end{pmatrix}','start');
+					editor.replaceSelection('\\begin{pmatrix}\\end{pmatrix}');
 					position = editor.getCursor();
-					editor.setCursor({line:position.line,ch:position.ch+15})
+					editor.setCursor({line:position.line,ch:position.ch-13})
 					event.preventDefault()
 					break;
 			};
@@ -58,14 +58,14 @@ export default class QuickLatexPlugin extends Plugin {
 		if (event.key=='Enter'){
 			if (this.withinAnyBrackets_document(cm, editor, '\\begin{pmatrix}','\\end{pmatrix}')){
 				if(!event.shiftKey) {
-					cm.replaceSelection(' \\\\ ','end')
+					editor.replaceSelection(' \\\\ ')
 					event.preventDefault();
 				} else {
 					return;
 				};
 			} else if (this.withinAnyBrackets_document(cm, editor, '\\begin{align','\\end{align')){
 				if(!event.shiftKey) {
-					cm.replaceSelection('\\\\\n&','end')
+					editor.replaceSelection('\\\\\n&')
 					event.preventDefault();
 				} else {
 					return;
@@ -75,7 +75,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 		if (event.key=='Tab') {
 			if (this.withinAnyBrackets_document(cm, editor, '\\begin{pmatrix}','\\end{pmatrix}')){
-				cm.replaceSelection(' & ','end')
+				editor.replaceSelection(' & ')
 				event.preventDefault();
 			}
 		};
@@ -97,22 +97,25 @@ export default class QuickLatexPlugin extends Plugin {
 				switch (event.key) {
 					case '{':		
 						if (!this.withinAnyBrackets_inline(editor,brackets)) {
-							cm.replaceSelection('}','start')
+							editor.replaceSelection('}')
+							editor.setCursor(position)
 						};
 						return;
 					case '[':		
 						if (!this.withinAnyBrackets_inline(editor,brackets)) {
-							cm.replaceSelection(']','start')
+							editor.replaceSelection(']')
+							editor.setCursor(position)
 						};
 						return;
 					case '(':		
 						if (!this.withinAnyBrackets_inline(editor,brackets)) {
-							cm.replaceSelection(')','start')
+							editor.replaceSelection(')')
+							editor.setCursor(position)
 						};
 						return;
 					case 'm':
 						if (editor.getRange({line:position.line,ch:position.ch-3},{line:position.line,ch:position.ch-1})=='su') {
-							cm.replaceSelection('\\limits','end')
+							editor.replaceSelection('\\limits')
 							return;
 						} else {
 							return;
