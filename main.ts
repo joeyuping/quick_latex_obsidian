@@ -266,40 +266,32 @@ export default class QuickLatexPlugin extends Plugin {
 			stop_brackets.push(...this.unclosed_bracket(editor, brackets[i][0], brackets[i][1], last_divide, 0)[1])
 		}
 
-		const stop_symbols = ['$','=','>','<',',','/'] // space not included?
-		const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide-1))
-		let frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
+		let frac = 0
 
 		// if numerator is enclosed by (), place frac in front of () and remove ()
-		let numerator:string;
-		if (editor.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide}) == ')') {
-			const open_bracket = this.unclosed_bracket(editor,'(',')',last_divide-1,frac)
-			numerator = editor.getRange({line:position.line,ch:open_bracket[1][open_bracket[1].length-1]},{line:position.line,ch:last_divide});
-			frac = open_bracket[1][open_bracket[1].length-1]-1;
-		} else {
-			numerator = editor.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
-		}
 		let numerator_remove_bracket = 0
-		while (numerator[0] == ' ') {
-			frac += 1;
-			numerator = editor.getRange({line:position.line,ch:frac+1},{line:position.line,ch:last_divide});
-		}
-		if (numerator[0] == '(' && 
-			numerator[numerator.length-1] == ')' && 
-			numerator.indexOf('(',1) <= numerator.indexOf(')',1) 
-			) {
+		if (editor.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide}) == ')') {
+			const numerator_open_bracket = this.unclosed_bracket(editor,'(',')',last_divide-1, 0)[1].slice(-1)[0]
+			frac = numerator_open_bracket-1;
 			numerator_remove_bracket = 1
-		}
-
+		} else {
+			const stop_symbols = ['$','=','>','<',',','/',' ']
+			const symbol_positions = stop_symbols.map(e => current_line.lastIndexOf(e, last_divide-1))
+			frac = Math.max(last_superscript, ...symbol_positions,...stop_brackets)
+		};
+		
 		// if denominator is enclosed by (), remove ()
-		const denominator = editor.getRange({line:position.line,ch:last_divide+1},{line:position.line,ch:position.ch})
-		let denominator_remove_bracket = 0
-		if (denominator[0] == '(' && 
-			denominator[denominator.length-1] == ')' &&
-			denominator.indexOf('(',1) <= denominator.indexOf(')',1)
-			) {
-			denominator_remove_bracket = 1
-		}
+		const denominator = editor.getRange(
+			{line:position.line,ch:last_divide+1},
+			{line:position.line,ch:position.ch}
+			);
+		let denominator_remove_bracket = 0;
+		if (denominator.slice(-1)[0] == ')') {
+			const denominator_open_bracket = this.unclosed_bracket(editor,'(',')',position.ch-1,0)[1].slice(-1)[0]
+			if (denominator_open_bracket == last_divide+1){
+				denominator_remove_bracket = 1;
+			};
+		};
 
 		// perform \frac replace
 		editor.replaceRange('}',{line:position.line,ch:position.ch-denominator_remove_bracket},{line:position.line,ch:position.ch});
@@ -359,7 +351,7 @@ export default class QuickLatexPlugin extends Plugin {
 		after: number,
 		unclosed_open_symbol: boolean=true //false for unclosed_close_symbol
 	): [boolean, number[]] => {
-		// determine if there are unclosed bracket within the same line before the reference positionu
+		// determine if there are unclosed bracket within the range specified by before and after
 		const position = editor.getCursor();
 		const text = editor.getRange({line:position.line,ch:after},{line:position.line,ch:before});
 		let open_array:number[] = []
