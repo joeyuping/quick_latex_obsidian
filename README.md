@@ -5,15 +5,15 @@ This simple plugin added various shortcut to simplify and speedup latex math typ
 
 ## Functionalities:
 
-**1. Move cursor in between \$\$**
-* Typing two consecutive **\$\$** will automatically shift the cursor in between the **\$\$**.  
+**1. Move cursor between \$\$ symbols**
+* Typing two consecutive **\$** will automatically shift the cursor in between the **\$\$** symbols.  
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif)
 
 **2. Autoclose {}, [], () brackets**
 * Typing **"{"**, **"["** and **"("** will automatically close with **"}"**,**"]"** or **")"**.  
 
 **3. Auto append "\limits" after "\sum"**  
-* Typing **"\sum"** will automatically append **\limits** to shorten the syntax for proper display of the limits for summation symbol.
+* Typing **"\sum"** will automatically append **"\limits"** to shorten the syntax for proper display of the limits for summation symbol.
 
 **4. Auto enlarge brackets that contains \sum, \int or \frac**  
 * Place cursor right after a () or [] bracketed expression that contains either \sum, \int or \frac and press the space key, the outermost brackets will be appended with \left and \right in order to display larger brackets to enclose these big expressions. E.g. (\sum\limits_{i=1}^n x+1) => **\left**(\sum\limits_{i=1}^n x+1 **\right**) : $(\sum\limits_{i=1}^n x+1)$ => $\left(\sum\limits_{i=1}^n x+1\right)$
@@ -33,20 +33,24 @@ E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lamb
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac2.gif)
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac3.gif)
 
-**7. shortcut for align block**
-* use "Alt+a" shortcut key to quickly insert **\begin{align\*} \end{align\*}** block  
+**7. Shortcut for Align Block**
+* use "Alt+Shift+A" (Mac: "Option+Shift+A") shortcut key to quickly insert **\begin{align\*} \end{align\*}** block  
 **Tip 1:** if you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press **"Alt+a"**.  
 **Tip 2: quick next line syntax within align block**
     * pressing **"enter"** within a \begin{align} \end{align} block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
+**Tip 3: Edit Short Cut**
+    * You may edit the shortcut keys in **Settings -> Hotkeys**
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/align%20block.gif)
 
-**8. shortcut for matrix block**
-* use "Alt+m" shortcut key to quickly insert **\begin{pmatrix} \end{pmatrix}** block  
+**8. Shortcut for Matrix Block**
+* use "Alt+Shift+M" (Mac: "Option+Shift+M") shortcut key to quickly insert **\begin{pmatrix} \end{pmatrix}** block  
 **Tip 1: quick next item and next line syntax within pmatrix block**
     * pressing **"tab"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" & "**.
     * pressing **"enter"** within a \begin{pmatrix} \end{pmatrix} block will automatically insert **" \\\\ "**.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
+**Tip 2: Edit Short Cut**
+    * You may edit the shortcut keys in **Settings -> Hotkeys**
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/matrix%20block.gif)
 
 ---
