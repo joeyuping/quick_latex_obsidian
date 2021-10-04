@@ -64,7 +64,7 @@ export default class QuickLatexPlugin extends Plugin {
 				],
 				editorCallback: (editor) => this.addAlignBlock(editor),
 			});
-
+			
 			this.addCommand({
 				id: 'addMatrixBlock',
 				name: 'Add Matrix Block',
@@ -316,10 +316,6 @@ export default class QuickLatexPlugin extends Plugin {
 		const position = editor.getCursor();
 		const current_line = editor.getLine(position.line);
 		let last_divide = current_line.lastIndexOf('/',position.ch-1);
-		while (editor.getRange({line:position.line,ch:last_divide-1},{line:position.line,ch:last_divide})=='\\') {
-			last_divide = current_line.lastIndexOf('/',last_divide-1);
-		}
-		
 
 		// if cursor is preceeded by a close bracket, and the corresponding open bracket is found before "/", remove the brackets and enclose whole expression using \frac
 		const letter_before_cursor = editor.getRange(
@@ -422,16 +418,26 @@ export default class QuickLatexPlugin extends Plugin {
 	};
 	
 	private addAlignBlock(editor: Editor) {
+		if (!this.settings.addAlignBlock_toggle) return;
 		const selected_text = editor.getSelection()
-		editor.replaceSelection('\\begin{align*}\n'+selected_text+'\n\\end{align*}');
+		editor.replaceSelection(
+			'\\begin{'+this.settings.addAlignBlock_parameter+'}\n'+
+			selected_text+
+			'\n\\end{'+this.settings.addAlignBlock_parameter+'}'
+			);
 		const position = editor.getCursor();
 		editor.setCursor({line:position.line-1,ch:editor.getLine(position.line-1).length})
 	}
 
 	private addMatrixBlock(editor: Editor) {
-		editor.replaceSelection('\\begin{pmatrix}\\end{pmatrix}');
+		if (!this.settings.addMatrixBlock_toggle) return;
+		editor.replaceSelection(
+			'\\begin{'+this.settings.addMatrixBlock_parameter+'}'+
+			'\\end{'+this.settings.addMatrixBlock_parameter+'}'
+			);
 		const position = editor.getCursor();
-		editor.setCursor({line:position.line,ch:position.ch-13})
+		const retract_length = ('\\end{'+this.settings.addMatrixBlock_parameter+'}').length
+		editor.setCursor({line:position.line,ch:position.ch-retract_length})
 	}
 
 	//utility functions
