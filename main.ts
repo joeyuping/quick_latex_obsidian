@@ -418,6 +418,8 @@ export default class QuickLatexPlugin extends Plugin {
 	};
 	
 	private addAlignBlock(editor: Editor) {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view) return;
 		if (!this.settings.addAlignBlock_toggle) return;
 		const selected_text = editor.getSelection()
 		editor.replaceSelection(
@@ -430,6 +432,8 @@ export default class QuickLatexPlugin extends Plugin {
 	}
 
 	private addMatrixBlock(editor: Editor) {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view) return;
 		if (!this.settings.addMatrixBlock_toggle) return;
 		editor.replaceSelection(
 			'\\begin{'+this.settings.addMatrixBlock_parameter+'}'+
