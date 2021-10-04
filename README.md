@@ -28,7 +28,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 <img src="https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/superscript.gif" width="500"/>
 
-### 6. Type "/" instead of \frac{}{}.
+### 6. Auto Fraction - Type "/" instead of \frac{}{}.
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$**.
 
 * **Tip 1:** Enclose your fraction expression within round brackets () will help the system identify the boundaries of your fraction.  
