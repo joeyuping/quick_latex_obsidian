@@ -638,7 +638,7 @@ export default class QuickLatexPlugin extends Plugin {
 	// Settings load and save
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
+	};
 
 };
 
@@ -795,5 +795,5 @@ class QuickLatexSettingTab extends PluginSettingTab {
 					this.plugin.settings.addMatrixBlock_parameter = value;
 					await this.plugin.saveData(this.plugin.settings);
 				}));
-	}
+	};
 }
