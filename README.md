@@ -10,7 +10,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 ### 1. Move cursor between \$\$ symbols
 * Typing two consecutive **\$** will automatically shift the cursor in between the **\$\$** symbols.  
 
-![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif)
+![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif | width=100)
 
 ### 2. Autoclose {}, [], () brackets
 * Typing **"{"**, **"["** and **"("** will automatically close with **"}"**,**"]"** or **")"**.  
@@ -19,7 +19,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * Typing **"\sum"** will automatically append **"\limits"** to shorten the syntax for proper display of the limits for summation symbol.
 
 ### 4. Auto enlarge brackets that contains \sum, \int or \frac
-* Place cursor right after a () or [] bracketed expression that contains either \sum, \int or \frac and press the space key, the outermost brackets will be appended with \left and \right in order to display larger brackets to enclose these big expressions. E.g. (\sum\limits_{i=1}^n x+1) => **\left**(\sum\limits_{i=1}^n x+1 **\right**) : $(\sum\limits_{i=1}^n x+1)$ => $\left(\sum\limits_{i=1}^n x+1\right)$  
+* Place cursor right after a () or [] bracketed expression that contains either \sum, \int or \frac and press the space key, the outermost brackets will be appended with \left and \right in order to display larger brackets to enclose these big expressions. E.g. (\sum\limits_{i=1}^n x+1) => **\left**(\sum\limits_{i=1}^n x+1 **\right**)
 
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/enlarge%20bracket.gif)
 
@@ -29,7 +29,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/superscript.gif)
 
 ### 6. Type "/" instead of \frac{}{}.
-* Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$** and display $\frac{e}{2}$  
+* Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$**.
 
 * **Tip 1:** Enclose your fraction expression within round brackets () will help the system identify the boundaries of your fraction.  
 
@@ -38,7 +38,6 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * **Tip 3:** For longer numerator or denominator expressions (especially when the expressions have white spaces which may trigger the frac-replace prematurely), enclose the expressions in round brackets **()**.  
 
 * **Tip 4:** The plugin will remove the outermost brackets in numerator and denominator.  
-E.g.  Typing 1/**(** \lambda n **)** followed by space key gives $\frac{1}{\lambda n}$ instead of $\frac{1}{(\lambda n)}$  
 
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac1.gif)
 ![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/frac2.gif)
