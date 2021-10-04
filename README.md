@@ -10,7 +10,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 ### 1. Move cursor between \$\$ symbols
 * Typing two consecutive **\$** will automatically shift the cursor in between the **\$\$** symbols.  
 
-![image](https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif | width=100)
+<img src="https://github.com/joeyuping/quick_latex_obsidian/blob/master/demo%20gif/move%20cursor%20within%20math.gif" width="100" />
 
 ### 2. Autoclose {}, [], () brackets
 * Typing **"{"**, **"["** and **"("** will automatically close with **"}"**,**"]"** or **")"**.  
