@@ -652,7 +652,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 			.setName('Auto enlarge brackets that contains \\sum, \\int or \\frac')
 			.setDesc('Place cursor right after a () or [] bracketed expression that contains either '+
 					'\\sum, \\int or \\frac and press the space key, the outermost brackets will be'+
-					'appended with \\left and \\right in order to display larger brackets to enclose these big expressions.')
+					' appended with \\left and \\right in order to display larger brackets to enclose these big expressions.')
 			.addToggle((toggle) => toggle
 					.setValue(this.plugin.settings.autoLargeBracket_toggle)
 					.onChange(async (value) => {
@@ -676,7 +676,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Type "/" instead of \\frac{}{}')
 			.setDesc('Use "/" symbol for quickly typing fractions. eg. type "1/2" followed by a "space" key'+
-					' instead of \\frac{1}{2}')
+					' to transform to \\frac{1}{2}')
 			.addToggle((toggle) => toggle
 					.setValue(this.plugin.settings.autoFraction_toggle)
 					.onChange(async (value) => {
