@@ -9,6 +9,7 @@ import {
 
 interface QuickLatexSettings {
 	moveIntoMath_toggle: boolean;
+	autoCloseMath_toggle: boolean;
 	autoCloseRound_toggle: boolean;
 	autoCloseSquare_toggle: boolean;
 	autoCloseCurly_toggle: boolean;
@@ -24,6 +25,7 @@ interface QuickLatexSettings {
 
 const DEFAULT_SETTINGS: QuickLatexSettings = {
 	moveIntoMath_toggle: true,
+	autoCloseMath_toggle: true,
 	autoCloseRound_toggle: true,
 	autoCloseSquare_toggle: true,
 	autoCloseCurly_toggle: true,
@@ -103,23 +105,30 @@ export default class QuickLatexPlugin extends Plugin {
 		if (['$', ' ', 'Enter', 'Tab'].contains(event.key)) {
 			switch (event.key) {
 				case '$':
+					// perform autoCloseMath
+					if (this.settings.autoCloseMath_toggle) {
+						editor.replaceSelection("$");
+					}
+
 					// perform moveIntoMath
-					if (!this.settings.moveIntoMath_toggle) return;
-					const position = editor.getCursor();
-					const t = editor.getRange(
-						{ line: position.line, ch: position.ch - 1 }, 
-						{ line: position.line, ch: position.ch })
-					const t2 = editor.getRange(
-						{ line: position.line, ch: position.ch }, 
-						{ line: position.line, ch: position.ch + 1 })
-					const t_2 = editor.getRange(
-						{ line: position.line, ch: position.ch - 2 }, 
-						{ line: position.line, ch: position.ch })
-					if (t == '$' && t2 != '$') {
-						editor.setCursor({ line: position.line, ch: position.ch - 1 })
-					} else if (t_2 == '$$') {
-						editor.setCursor({ line: position.line, ch: position.ch - 1 })
-					};
+					if (this.settings.moveIntoMath_toggle) {
+						const position = editor.getCursor();
+						const t = editor.getRange(
+							{ line: position.line, ch: position.ch - 1 }, 
+							{ line: position.line, ch: position.ch })
+						const t2 = editor.getRange(
+							{ line: position.line, ch: position.ch }, 
+							{ line: position.line, ch: position.ch + 1 })
+						const t_2 = editor.getRange(
+							{ line: position.line, ch: position.ch - 2 }, 
+							{ line: position.line, ch: position.ch })
+						if (t == '$' && t2 != '$') {
+							editor.setCursor({ line: position.line, ch: position.ch - 1 })
+						} else if (t_2 == '$$') {
+							editor.setCursor({ line: position.line, ch: position.ch - 1 })
+						};
+					}
+
 					return;
 
 				case ' ':
@@ -656,6 +665,18 @@ class QuickLatexSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl('h2', { text: 'Quick Latex for Obsidian - Settings' });
+
+		new Setting(containerEl)
+			.setName('Autoclose $$ symbols')
+			.setDesc('Typing one $ symbol will automatically lose with another $ symbol '+
+					'(best used with "Move cursor between $$ symbols" function')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.autoCloseMath_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.autoCloseMath_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
 
 		new Setting(containerEl)
 			.setName('Move cursor between $$ symbols')
