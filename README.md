@@ -89,6 +89,7 @@ e.g. al:\\alpha, be:\\beta
 
 |Shorthand|String|Shorthand|String|Shorthand|String|Shorthand|String|
 |:-------:|:----:|:-------:|:----:|:-------:|:----:|:-------:|:----:|
+|sq|\\sqrt|||||||
 |al|\\alpha|be|\\beta|ga|\\gamma|Ga|\\Gamma|
 |de|\\delta|De|\\Delta|ep|\\epsilon|ze|\\zeta|
 |et|\\eta|th|\\theta|Th|\\Theta|io|\\iota|

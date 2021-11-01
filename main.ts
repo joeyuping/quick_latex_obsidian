@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoSumLimit_toggle: true,
 	autoEncloseSup_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
+	customShorthand_parameter: "sq:\\sqrt, al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
 							"et:\\eta, th:\\theta, Th:\\Theta, io:\\iota, "+
 							"ka:\\kappa, la:\\lambda, La:\\Lambda, mu:\\mu, "+
