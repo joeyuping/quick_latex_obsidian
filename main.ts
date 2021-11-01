@@ -21,6 +21,8 @@ interface QuickLatexSettings {
 	autoLargeBracket_toggle: boolean;
 	autoSumLimit_toggle: boolean;
 	autoEncloseSup_toggle: boolean;
+	customShorthand_toggle: boolean;
+	customShorthand_parameter: string
 }
 
 const DEFAULT_SETTINGS: QuickLatexSettings = {
@@ -37,10 +39,20 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoLargeBracket_toggle: true,
 	autoSumLimit_toggle: true,
 	autoEncloseSup_toggle: true,
+	customShorthand_toggle: true,
+	customShorthand_parameter: "al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
+							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
+							"et:\\eta, th:\\theta, Th:\\Theta, io:\\iota, "+
+							"ka:\\kappa, la:\\lambda, La:\\Lambda, mu:\\mu, "+
+							"nu:\\nu, xi:\\xi, Xi:\\Xi, pi:\\pi, Pi:\\Pi, "+
+							"rh:\\rho, si:\\sigma, Si:\\Sigma, ta:\\tau, "+
+							"up:\\upsilon, Up:\\Upsilon, ph:\\phi, Ph:\\Phi, ch:\\chi, "+
+							"ps:\\psi, Ps:\\Psi, om:\\omega, Om:\\Omega"
 }
 
 export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
+	shorthand_array: string[][];
 
 	async onload() {
 		console.log('loading Quick-Latex plugin');
@@ -78,6 +90,9 @@ export default class QuickLatexPlugin extends Plugin {
 				],
 				editorCallback: (editor) => this.addMatrixBlock(editor),
 			});
+
+			// preprocess shorthand array
+			this.shorthand_array = this.settings.customShorthand_parameter.split(",").map(item=>item.split(":").map(s=>s.trim()));
 		});
 
 
@@ -134,13 +149,31 @@ export default class QuickLatexPlugin extends Plugin {
 				case ' ':
 					if (!this.settings.autoFraction_toggle &&
 						!this.settings.autoLargeBracket_toggle &&
-						!this.settings.autoEncloseSup_toggle) return;
+						!this.settings.autoEncloseSup_toggle &&
+						!this.settings.customShorthand_toggle) return;
 
 					if (this.withinMath(cm, editor)) {
 
 						const position = editor.getCursor();
 						const current_line = editor.getLine(position.line);
 						const last_dollar = current_line.lastIndexOf('$', position.ch - 1);
+
+						// check for custom shorthand
+						if (this.settings.customShorthand_toggle) {
+							const keyword = editor.getRange(
+								{ line: position.line, ch: position.ch - 2 }, 
+								{ line: position.line, ch: position.ch }
+							)
+							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+								if (this.shorthand_array[i][0] == keyword) {
+									editor.replaceRange(this.shorthand_array[i][1],
+										{ line: position.line, ch: position.ch - 2 }, 
+										{ line: position.line, ch: position.ch })
+									event.preventDefault();
+									return;
+								}
+							}
+						}
 
 						// retrieve the last unbracketed superscript
 						let last_superscript = current_line.lastIndexOf('^', position.ch);
@@ -814,6 +847,31 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.addMatrixBlock_parameter)
 				.onChange(async (value) => {
 					this.plugin.settings.addMatrixBlock_parameter = value;
+					await this.plugin.saveData(this.plugin.settings);
+				}));
+
+		new Setting(containerEl)
+			.setName('Custom Shorthand')
+			.setDesc('Use two-letters custom shorthand for common latex strings. '+
+			'Eg, typing "al" followed by "space" key will replace with "\\alpha"')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.customShorthand_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.customShorthand_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
+			.setName('Custom Shorthand Parameter')
+			.setDesc('Separate the two-letters shorthand and the string with ":" ;'+
+			'Separate each set of shorthands with ",".')
+			.addText((text) => text
+				.setValue(this.plugin.settings.customShorthand_parameter)
+				.onChange(async (value) => {
+					this.plugin.settings.customShorthand_parameter = value;
+					this.plugin.shorthand_array = value
+					.split(",").map(item=>item.split(":").map(s=>s.trim()));
 					await this.plugin.saveData(this.plugin.settings);
 				}));
 	};

@@ -81,6 +81,25 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_matrixblock.gif)
 
+### **[NEW]** 9. Custom shorthand
+* Use two-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
+* You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",". 
+e.g. al:\\alpha, be:\\beta
+* Below is the list of default shorthand:  
+
+|Shorthand|String|Shorthand|String|Shorthand|String|Shorthand|String|
+|:-------:|:----:|:-------:|:----:|:-------:|:----:|:-------:|:----:|
+|al|\\alpha|be|\\beta|ga|\\gamma|Ga|\\Gamma|
+|de|\\delta|De|\\Delta|ep|\\epsilon|ze|\\zeta|
+|et|\\eta|th|\\theta|Th|\\Theta|io|\\iota|
+|ka|\\kappa|la|\\lambda|La|\\Lambda|mu|\\mu|
+|nu|\\nu|xi|\\xi|Xi|\\Xi|pi|\\pi|
+|Pi|\\Pi|rh|\\rho|si|\\sigma|Si|\\Sigma|
+|ta|\\tau|up|\\upsilon|Up|\\Upsilon|ph|\\phi|
+|Ph|\\Phi|ch|\\chi|ps|\\psi|Ps|\\Psi|
+|om|\\omega|Om|\\Omega|
+
+
 ---
 ## Note:
 * The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime!
@@ -88,7 +107,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ---
 ## Future:
-- [ ] set custom shorthand for common symbols such as \sigma, \lambda
+- [X] set custom shorthand for common symbols such as \sigma, \lambda
 
 ---
 ## source code:
