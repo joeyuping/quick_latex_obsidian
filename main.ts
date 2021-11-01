@@ -321,9 +321,10 @@ export default class QuickLatexPlugin extends Plugin {
 					case 'm':
 						if (!this.settings.autoSumLimit_toggle) return;
 						if (editor.getRange(
-							{ line: position.line, ch: position.ch - 3 }, 
-							{ line: position.line, ch: position.ch - 1 }) == 'su') {
-							editor.replaceSelection('\\limits')
+							{ line: position.line, ch: position.ch - 2 }, 
+							{ line: position.line, ch: position.ch }) == 'su') {
+							editor.replaceSelection('m\\limits')
+							event.preventDefault()
 							return;
 						};
 				};
