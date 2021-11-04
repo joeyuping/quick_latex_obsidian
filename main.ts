@@ -54,6 +54,8 @@ export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
 	shorthand_array: string[][];
 
+  private vimIsInsert: boolean = false;
+
 	async onload() {
 		console.log('loading Quick-Latex plugin');
 
@@ -63,6 +65,13 @@ export default class QuickLatexPlugin extends Plugin {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
 				cm.on('keyup', this.handleKeyUp);
 				cm.on('keydown', this.handleKeyDown);
+        // register vim mode change
+        cm.on('vim-mode-change', (modeObj: any) => {
+              if(modeObj.mode === 'insert')
+                    this.vimIsInsert = true;
+              else
+                    this.vimIsInsert = false;
+        });
 			});
 
 			this.addSettingTab(new QuickLatexSettingTab(this.app, this));
@@ -121,7 +130,7 @@ export default class QuickLatexPlugin extends Plugin {
 			switch (event.key) {
 				case '$':
 					// perform autoCloseMath
-					if (this.settings.autoCloseMath_toggle) {
+					if (this.settings.autoCloseMath_toggle && this.vimIsInsert) {
 						editor.replaceSelection("$");
 					}
 
@@ -129,13 +138,13 @@ export default class QuickLatexPlugin extends Plugin {
 					if (this.settings.moveIntoMath_toggle) {
 						const position = editor.getCursor();
 						const t = editor.getRange(
-							{ line: position.line, ch: position.ch - 1 }, 
+							{ line: position.line, ch: position.ch - 1 },
 							{ line: position.line, ch: position.ch })
 						const t2 = editor.getRange(
-							{ line: position.line, ch: position.ch }, 
+							{ line: position.line, ch: position.ch },
 							{ line: position.line, ch: position.ch + 1 })
 						const t_2 = editor.getRange(
-							{ line: position.line, ch: position.ch - 2 }, 
+							{ line: position.line, ch: position.ch - 2 },
 							{ line: position.line, ch: position.ch })
 						if (t == '$' && t2 != '$') {
 							editor.setCursor({ line: position.line, ch: position.ch - 1 })
@@ -161,13 +170,13 @@ export default class QuickLatexPlugin extends Plugin {
 						// check for custom shorthand
 						if (this.settings.customShorthand_toggle) {
 							const keyword = editor.getRange(
-								{ line: position.line, ch: position.ch - 2 }, 
+								{ line: position.line, ch: position.ch - 2 },
 								{ line: position.line, ch: position.ch }
 							)
 							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
 								if (this.shorthand_array[i][0] == keyword) {
 									editor.replaceRange(this.shorthand_array[i][1],
-										{ line: position.line, ch: position.ch - 2 }, 
+										{ line: position.line, ch: position.ch - 2 },
 										{ line: position.line, ch: position.ch })
 									event.preventDefault();
 									return;
@@ -179,7 +188,7 @@ export default class QuickLatexPlugin extends Plugin {
 						let last_superscript = current_line.lastIndexOf('^', position.ch);
 						while (last_superscript != -1) {
 							const letter_after_superscript = editor.getRange(
-								{ line: position.line, ch: last_superscript + 1 }, 
+								{ line: position.line, ch: last_superscript + 1 },
 								{ line: position.line, ch: last_superscript + 2 });
 							if (letter_after_superscript == '{') {
 								last_superscript = current_line.lastIndexOf('^', last_superscript - 1);
@@ -191,7 +200,7 @@ export default class QuickLatexPlugin extends Plugin {
 						// retrieve the last divide symbol
 						let last_divide = current_line.lastIndexOf('/', position.ch - 1);
 						while (editor.getRange(
-							{ line: position.line, ch: last_divide - 1 }, 
+							{ line: position.line, ch: last_divide - 1 },
 							{ line: position.line, ch: last_divide }
 							) == '\\') {
 							last_divide = current_line.lastIndexOf('/', last_divide - 1);
@@ -220,7 +229,7 @@ export default class QuickLatexPlugin extends Plugin {
 						// perform autoLargeBracket
 						if (this.settings.autoLargeBracket_toggle) {
 							let symbol_before = editor.getRange(
-								{ line: position.line, ch: position.ch - 1 }, 
+								{ line: position.line, ch: position.ch - 1 },
 								{ line: position.line, ch: position.ch })
 							if (symbol_before == ')' || symbol_before == ']') {
 								this.autoLargeBracket(editor, event);
@@ -321,7 +330,7 @@ export default class QuickLatexPlugin extends Plugin {
 					case 'm':
 						if (!this.settings.autoSumLimit_toggle) return;
 						if (editor.getRange(
-							{ line: position.line, ch: position.ch - 2 }, 
+							{ line: position.line, ch: position.ch - 2 },
 							{ line: position.line, ch: position.ch }) == 'su') {
 							editor.replaceSelection('m\\limits')
 							event.preventDefault()
@@ -348,17 +357,17 @@ export default class QuickLatexPlugin extends Plugin {
 
 		if (last_superscript != -1) {
 			const letter_after_superscript = editor.getRange(
-				{ line: position.line, ch: last_superscript + 1 }, 
+				{ line: position.line, ch: last_superscript + 1 },
 				{ line: position.line, ch: last_superscript + 2 });
 			if (letter_after_superscript == '(' && letter_before_cursor == ')') {
 				editor.replaceRange(
-					'}', 
-					{ line: position.line, ch: position.ch - 1 }, 
+					'}',
+					{ line: position.line, ch: position.ch - 1 },
 					{ line: position.line, ch: position.ch }
 					);
 				editor.replaceRange(
-					'{', 
-					{ line: position.line, ch: last_superscript + 1 }, 
+					'{',
+					{ line: position.line, ch: last_superscript + 1 },
 					{ line: position.line, ch: last_superscript + 2 }
 					);
 				event.preventDefault();
@@ -392,7 +401,7 @@ export default class QuickLatexPlugin extends Plugin {
 			{ line: position.line, ch: position.ch }
 		)
 
-		// if there are any brackets unclosed before divide symbol, 
+		// if there are any brackets unclosed before divide symbol,
 		// include the open brackets into stop_symbols
 		const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 		let stop_brackets = []
@@ -402,18 +411,18 @@ export default class QuickLatexPlugin extends Plugin {
 				const pos_of_the_open_bracket = open_brackets[open_brackets.length - 1]
 				if (pos_of_the_open_bracket < last_divide) {
 					editor.replaceRange(
-						'}', 
-						{ line: position.line, ch: position.ch - 1 }, 
+						'}',
+						{ line: position.line, ch: position.ch - 1 },
 						{ line: position.line, ch: position.ch }
 						);
 					editor.replaceRange(
-						'}{', 
-						{ line: position.line, ch: last_divide }, 
+						'}{',
+						{ line: position.line, ch: last_divide },
 						{ line: position.line, ch: last_divide + 1 }
 						);
 					editor.replaceRange(
-						'\\frac{', 
-						{ line: position.line, ch: pos_of_the_open_bracket }, 
+						'\\frac{',
+						{ line: position.line, ch: pos_of_the_open_bracket },
 						{ line: position.line, ch: pos_of_the_open_bracket + 1 }
 						);
 					event.preventDefault();
@@ -452,18 +461,18 @@ export default class QuickLatexPlugin extends Plugin {
 
 		// perform \frac replace
 		editor.replaceRange(
-			'}', 
-			{ line: position.line, ch: position.ch - denominator_remove_bracket }, 
+			'}',
+			{ line: position.line, ch: position.ch - denominator_remove_bracket },
 			{ line: position.line, ch: position.ch }
 			);
 		editor.replaceRange(
-			'}{', 
-			{ line: position.line, ch: last_divide - numerator_remove_bracket }, 
+			'}{',
+			{ line: position.line, ch: last_divide - numerator_remove_bracket },
 			{ line: position.line, ch: last_divide + 1 + denominator_remove_bracket }
 			);
 		editor.replaceRange(
-			'\\frac{', 
-			{ line: position.line, ch: frac + 1 }, 
+			'\\frac{',
+			{ line: position.line, ch: frac + 1 },
 			{ line: position.line, ch: frac + 1 + numerator_remove_bracket }
 			);
 		event.preventDefault();
@@ -488,9 +497,9 @@ export default class QuickLatexPlugin extends Plugin {
 				large_operators.some(e => current_line.lastIndexOf(e, position.ch - 1) > left_array[0]) == true
 			) {
 				for (let k = right_array.length - 1; k > -1; k--) {
-					// check if unclosed brackets already appended with \right 
+					// check if unclosed brackets already appended with \right
 					let check_right = editor.getRange(
-						{ line: position.line, ch: right_array[k] - 6 }, 
+						{ line: position.line, ch: right_array[k] - 6 },
 						{ line: position.line, ch: right_array[k] });
 					if (check_right != '\\right') {
 						editor.replaceRange('\\right', { line: position.line, ch: right_array[k] });
@@ -502,7 +511,7 @@ export default class QuickLatexPlugin extends Plugin {
 				for (let j = left_array.length - 1; j > -1; j--) {
 					// check if unclosed brackets already appended with \left
 					let check_left = editor.getRange(
-						{ line: position.line, ch: left_array[j] - 5 }, 
+						{ line: position.line, ch: left_array[j] - 5 },
 						{ line: position.line, ch: left_array[j] });
 					if (check_left != '\\left') {
 						editor.replaceRange('\\left', { line: position.line, ch: left_array[j] });
@@ -554,7 +563,7 @@ export default class QuickLatexPlugin extends Plugin {
 		// determine if there are unclosed bracket within the range specified by before and after
 		const position = editor.getCursor();
 		const text = editor.getRange(
-			{ line: position.line, ch: after }, 
+			{ line: position.line, ch: after },
 			{ line: position.line, ch: before });
 		let open_array: number[] = []
 		let close_array: number[] = []
@@ -596,10 +605,10 @@ export default class QuickLatexPlugin extends Plugin {
 		let found = current_line.indexOf('$', from);
 		while (found != -1 && found < cursor_index) {
 			let next_char = editor.getRange(
-				{ line: position.line, ch: found + 1 }, 
+				{ line: position.line, ch: found + 1 },
 				{ line: position.line, ch: found + 2 })
 			let prev_char = editor.getRange(
-				{ line: position.line, ch: found - 1 }, 
+				{ line: position.line, ch: found - 1 },
 				{ line: position.line, ch: found })
 			if (next_char == '$' || prev_char == '$' || next_char == ' ') {
 				from = found + 1;
