@@ -53,8 +53,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
 	shorthand_array: string[][];
-
-  private vimAllow_autoCloseMath: boolean = true;
+    private vimAllow_autoCloseMath: boolean = true;
 
 	async onload() {
 		console.log('loading Quick-Latex plugin');
@@ -65,12 +64,7 @@ export default class QuickLatexPlugin extends Plugin {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
 				cm.on('keyup', this.handleKeyUp);
 				cm.on('keydown', this.handleKeyDown);
-        cm.on('vim-mode-change', (modeObj: any) => {
-					if (!modeObj || modeObj.mode === 'insert')
-						this.vimAllow_autoCloseMath = true;
-					else
-						this.vimAllow_autoCloseMath = false;
-				});
+                cm.on('vim-mode-change', this.handleVimModeChange);
 			});
 
 			this.addSettingTab(new QuickLatexSettingTab(this.app, this));
@@ -112,16 +106,20 @@ export default class QuickLatexPlugin extends Plugin {
 		this.app.workspace.iterateCodeMirrors((cm) => {
 			cm.off('keyup', this.handleKeyUp);
 			cm.off('keydown', this.handleKeyDown);
-      cm.off('vim-mode-change', (modeObj: any) => {
-            if (!modeObj || modeObj.mode === 'insert')
-                  this.vimAllow_autoCloseMath = true;
-            else
-                  this.vimAllow_autoCloseMath = false;
-      });
+            cm.off('vim-mode-change', this.handleVimModeChange);
 		});
 	}
 
 	//triggering functions
+    private readonly handleVimModeChange = (
+        modeObj: any
+    ) : void => {
+        if (!modeObj || modeObj.mode === 'insert')
+            this.vimAllow_autoCloseMath = true;
+        else
+            this.vimAllow_autoCloseMath = false;
+    };
+
 	private readonly handleKeyDown = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
