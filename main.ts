@@ -202,11 +202,8 @@ export default class QuickLatexPlugin extends Plugin {
 							const letter_after_subscript = editor.getRange(
 								{ line: position.line, ch: last_subscript + 1 },
 								{ line: position.line, ch: last_subscript + 2 });
-							const ignore = ["+","*","/","^"].map(e=>current_line.lastIndexOf(e, position.ch))
-																.some(e=>e > last_subscript)
 							if (letter_after_subscript != "{" && 
-								(position.ch - last_subscript) <= 10 &&
-								!ignore) {
+								(position.ch - last_subscript) <= 10 ) {
 								editor.replaceRange("}", position);
 								editor.replaceRange("{", {line:position.line, ch:last_subscript+1});
 								event.preventDefault();

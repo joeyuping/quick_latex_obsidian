@@ -24,12 +24,16 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![auto Enlarge Bracket](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_autoEnlargeBracket.gif)
 
-### 5. Auto enclose expression after superscipt with {}
-* Typing expressions after superscript **"^"** symbol follow by a **"space" key** will automatically surround the expressions with **"{}"**.
+### 5. Auto enclose expression after superscipt and subscript with {}
+* Typing expressions after superscript **"^"** and subscript **"_"** symbol follow by a **"space" key** will automatically surround the expressions with **"{}"**.
+* NOTE: if you are use to typing subscript indexing without enclosing it with {}, there is high tendency that the autoEncloseSubscript function may miss fire when you press space after a subscript symbol not intended to be bracketed. In this case, its recommended to turn off this function.
 
 ![auto Enclose Superscript](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_autoEncloseSup.gif)
 
-### 6. Auto Fraction - Type "/" instead of \frac{}{}.
+### [NEW!] 6. Enclose selected expression with brackets
+* Select an expression and press "{", "[" or "(" key will automatically enclose the expression with the brackets.
+
+### 7. Auto Fraction - Type "/" instead of \frac{}{}.
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$**.
 
 ![auto Fraction](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_autoFraction.gif)
@@ -48,7 +52,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 * **Tip 4:** The plugin will remove the outermost brackets in numerator and denominator.
 
-### 7. Shortcut for Align Block
+### 8. Shortcut for Align Block
 * use "Alt+Shift+A" (Mac: "Option+Shift+A") shortcut key to quickly insert **\begin{align\*} \end{align\*}** block
 
 * **Tip 1:** If you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press "Alt+Shift+A" (Mac: "Option+Shift+A").
@@ -65,7 +69,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Align Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_alignblock.gif)
 
-### 8. Shortcut for Matrix Block
+### 9. Shortcut for Matrix Block
 * use "Alt+Shift+M" (Mac: "Option+Shift+M") shortcut key to quickly insert **\begin{pmatrix} \end{pmatrix}** block
 
 * **Tip 1: quick next item and next line syntax within matrix block**
@@ -81,7 +85,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_matrixblock.gif)
 
-### **[NEW]** 9. Custom shorthand
+### **[NEW]** 10. Custom shorthand
 * Use two-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
 * You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
 e.g. al:\\alpha, be:\\beta
@@ -106,10 +110,6 @@ e.g. al:\\alpha, be:\\beta
 * The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime!
 * This is my first Obsidian Plugin project, bugs might be present. Please use with caution.
 * Compatible with builtin vim-mode.
-
----
-## Future:
-- [X] set custom shorthand for common symbols such as \sigma, \lambda
 
 ---
 ## source code:
