@@ -21,6 +21,8 @@ interface QuickLatexSettings {
 	autoLargeBracket_toggle: boolean;
 	autoSumLimit_toggle: boolean;
 	autoEncloseSup_toggle: boolean;
+	autoEncloseSub_toggle: boolean;
+	encloseSelection_toggle: boolean;
 	customShorthand_toggle: boolean;
 	customShorthand_parameter: string
 }
@@ -39,6 +41,8 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoLargeBracket_toggle: true,
 	autoSumLimit_toggle: true,
 	autoEncloseSup_toggle: true,
+	autoEncloseSub_toggle: true,
+	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
 	customShorthand_parameter: "sq:\\sqrt, al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
@@ -62,9 +66,10 @@ export default class QuickLatexPlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
-				cm.on('keyup', this.handleKeyUp);
+				cm.on('vim-mode-change', this.handleVimModeChange);
 				cm.on('keydown', this.handleKeyDown);
-                cm.on('vim-mode-change', this.handleVimModeChange);
+				cm.on('keypress', this.handleKeyPress);
+				
 			});
 
 			this.addSettingTab(new QuickLatexSettingTab(this.app, this));
@@ -104,9 +109,10 @@ export default class QuickLatexPlugin extends Plugin {
 		console.log('unloading Quick-Latex plugin');
 
 		this.app.workspace.iterateCodeMirrors((cm) => {
-			cm.off('keyup', this.handleKeyUp);
+			cm.off('vim-mode-change', this.handleVimModeChange);
 			cm.off('keydown', this.handleKeyDown);
-            cm.off('vim-mode-change', this.handleVimModeChange);
+			cm.off('keypress', this.handleKeyPress);
+			
 		});
 	}
 
@@ -162,6 +168,7 @@ export default class QuickLatexPlugin extends Plugin {
 					if (!this.settings.autoFraction_toggle &&
 						!this.settings.autoLargeBracket_toggle &&
 						!this.settings.autoEncloseSup_toggle &&
+						!this.settings.autoEncloseSub_toggle &&
 						!this.settings.customShorthand_toggle) return;
 
 					if (this.withinMath(cm, editor)) {
@@ -187,6 +194,26 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						}
 
+						// find last unbracketed subscript within last 10 characters and perform autoEncloseSub
+						// ignore expression that contain + - * / ^
+						if (this.settings.autoEncloseSub_toggle) {
+							let last_subscript = current_line.lastIndexOf('_', position.ch);
+							if (last_subscript == -1) return;
+							const letter_after_subscript = editor.getRange(
+								{ line: position.line, ch: last_subscript + 1 },
+								{ line: position.line, ch: last_subscript + 2 });
+							const ignore = ["+","*","/","^"].map(e=>current_line.lastIndexOf(e, position.ch))
+																.some(e=>e > last_subscript)
+							if (letter_after_subscript != "{" && 
+								(position.ch - last_subscript) <= 10 &&
+								!ignore) {
+								editor.replaceRange("}", position);
+								editor.replaceRange("{", {line:position.line, ch:last_subscript+1});
+								event.preventDefault();
+								return;
+							}
+						}
+					
 						// retrieve the last unbracketed superscript
 						let last_superscript = current_line.lastIndexOf('^', position.ch);
 						while (last_superscript != -1) {
@@ -295,7 +322,7 @@ export default class QuickLatexPlugin extends Plugin {
 		};
 	};
 
-	private readonly handleKeyUp = (
+	private readonly handleKeyPress = (
 		cm: CodeMirror.Editor,
 		event: KeyboardEvent,
 	): void => {
@@ -310,25 +337,55 @@ export default class QuickLatexPlugin extends Plugin {
 				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 				switch (event.key) {
 					case '{':
-						if (!this.settings.autoCloseCurly_toggle) return;
-						if (!this.withinAnyBrackets_inline(editor, brackets)) {
-							editor.replaceSelection('}')
-							editor.setCursor(position)
+						if (this.settings.encloseSelection_toggle) {
+							if (editor.getSelection().length > 0) {
+								editor.replaceSelection('{' + editor.getSelection() + '}')
+								event.preventDefault();
+								return;
+							}
 						};
+						if (this.settings.autoCloseCurly_toggle) {
+							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+								editor.replaceSelection('{}');
+								editor.setCursor({line:position.line, ch:position.ch+1});
+								event.preventDefault();
+								return;
+							};
+						}
 						return;
 					case '[':
-						if (!this.settings.autoCloseSquare_toggle) return;
-						if (!this.withinAnyBrackets_inline(editor, brackets)) {
-							editor.replaceSelection(']')
-							editor.setCursor(position)
-						};
+						if (this.settings.encloseSelection_toggle) {
+							if (editor.getSelection().length > 0) {
+								editor.replaceSelection('[' + editor.getSelection() + ']');
+								event.preventDefault();
+								return;
+							}
+						}
+						if (this.settings.autoCloseSquare_toggle) {
+							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+								editor.replaceSelection('[]');
+								editor.setCursor({line:position.line, ch:position.ch+1});
+								event.preventDefault();
+								return;
+							};
+						}
 						return;
 					case '(':
-						if (!this.settings.autoCloseRound_toggle) return;
-						if (!this.withinAnyBrackets_inline(editor, brackets)) {
-							editor.replaceSelection(')')
-							editor.setCursor(position)
+						if (this.settings.encloseSelection_toggle) {
+							if (editor.getSelection().length > 0) {
+								editor.replaceSelection('(' + editor.getSelection() + ')');
+								event.preventDefault()
+								return;
+							}
 						};
+						if (this.settings.autoCloseRound_toggle) {
+							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+								editor.replaceSelection('()');
+								editor.setCursor({line:position.line, ch:position.ch+1});
+								event.preventDefault();
+								return;
+							};
+						}	
 						return;
 					case 'm':
 						if (!this.settings.autoSumLimit_toggle) return;
@@ -795,12 +852,37 @@ class QuickLatexSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Auto enclose expression after superscipt with {}')
-			.setDesc('Typing expressions after superscript "^" symbol follow by a "space" key ' +
-				'will automatically surround the expressions with "{}"')
+			.setDesc('Typing expression after superscript "^" symbol follow by a "space" key ' +
+				'will automatically surround the expression with "{}"')
 			.addToggle((toggle) => toggle
 				.setValue(this.plugin.settings.autoEncloseSup_toggle)
 				.onChange(async (value) => {
 					this.plugin.settings.autoEncloseSup_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
+			.setName('Auto enclose expression after subscript with {}')
+			.setDesc('Typing expression after subscript "_" symbol follow by a "space" key ' +
+				'will automatically surround the expression with "{}". ' +
+				'Note: expression more than 10 characters long will be ignored.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.autoEncloseSub_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.autoEncloseSub_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enclose selected expression with brackets {},[],()')
+			.setDesc('Select an expression and press "{", "[" or "(" key will automatically ' +
+				'enclose the expression with the brackets.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.encloseSelection_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.encloseSelection_toggle = value;
 					await this.plugin.saveData(this.plugin.settings);
 					this.display();
 				}));
