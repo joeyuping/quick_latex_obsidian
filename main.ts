@@ -44,7 +44,9 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "sq:\\sqrt, al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
+	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, "+
+							"cd:\\cdot, qu:\\quad, ti:\\times, "+
+							"al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
 							"et:\\eta, th:\\theta, Th:\\Theta, io:\\iota, "+
 							"ka:\\kappa, la:\\lambda, La:\\Lambda, mu:\\mu, "+
@@ -185,10 +187,18 @@ export default class QuickLatexPlugin extends Plugin {
 							)
 							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
 								if (this.shorthand_array[i][0] == keyword) {
-									editor.replaceRange(this.shorthand_array[i][1],
-										{ line: position.line, ch: position.ch - 2 },
-										{ line: position.line, ch: position.ch })
-									event.preventDefault();
+									if (this.shorthand_array[i][1].slice(-2) == "{}") {
+										editor.replaceRange(this.shorthand_array[i][1],
+											{ line: position.line, ch: position.ch - 2 },
+											{ line: position.line, ch: position.ch });
+										editor.setCursor({ line: position.line, 
+											ch: position.ch + this.shorthand_array[i][1].length - 3} );
+										event.preventDefault();
+									} else {
+										editor.replaceRange(this.shorthand_array[i][1],
+											{ line: position.line, ch: position.ch - 2 },
+											{ line: position.line, ch: position.ch });
+									}									
 									return;
 								}
 							}
@@ -957,7 +967,8 @@ class QuickLatexSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Custom Shorthand Parameter')
 			.setDesc('Separate the two-letters shorthand and the string with ":" ;'+
-			'Separate each set of shorthands with ",".')
+			'Separate each set of shorthands with ","; '+
+			'For Expression that ends with "{}", cursor will automatically be placed within the bracket.')
 			.addText((text) => text
 				.setValue(this.plugin.settings.customShorthand_parameter)
 				.onChange(async (value) => {

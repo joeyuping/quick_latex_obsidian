@@ -89,20 +89,26 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * Use two-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
 * You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
 e.g. al:\\alpha, be:\\beta
+* **Tip:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
 * Below is the list of default shorthand:
 
-|Shorthand|String|Shorthand|String|Shorthand|String|Shorthand|String|
-|:-------:|:----:|:-------:|:----:|:-------:|:----:|:-------:|:----:|
-|sq|\\sqrt|||||||
-|al|\\alpha|be|\\beta|ga|\\gamma|Ga|\\Gamma|
-|de|\\delta|De|\\Delta|ep|\\epsilon|ze|\\zeta|
-|et|\\eta|th|\\theta|Th|\\Theta|io|\\iota|
-|ka|\\kappa|la|\\lambda|La|\\Lambda|mu|\\mu|
-|nu|\\nu|xi|\\xi|Xi|\\Xi|pi|\\pi|
-|Pi|\\Pi|rh|\\rho|si|\\sigma|Si|\\Sigma|
-|ta|\\tau|up|\\upsilon|Up|\\Upsilon|ph|\\phi|
-|Ph|\\Phi|ch|\\chi|ps|\\psi|Ps|\\Psi|
-|om|\\omega|Om|\\Omega|
+|Shorthand|String|Shorthand|String|Shorthand|String|
+|:-------:|:----:|:-------:|:----:|:-------:|:----:|
+|sq|\\sqrt{}|bb|\\mathbb{}|bf|\\mathbf{}|
+|te|\\text{}|
+|cd|\\cdot|qu|\\quad|ti|\\times|
+|al|\\alpha|be|\\beta|ga|\\gamma|
+|Ga|\\Gamma|de|\\delta|De|\\Delta|
+|ep|\\epsilon|ze|\\zeta|et|\\eta|
+|th|\\theta|Th|\\Theta|io|\\iota|
+|ka|\\kappa|la|\\lambda|La|\\Lambda|
+|mu|\\mu|nu|\\nu|xi|\\xi|
+|Xi|\\Xi|pi|\\pi|Pi|\\Pi|
+|rh|\\rho|si|\\sigma|Si|\\Sigma|
+|ta|\\tau|up|\\upsilon|Up|\\Upsilon|
+|ph|\\phi|Ph|\\Phi|ch|\\chi|
+|ps|\\psi|Ps|\\Psi|om|\\omega|
+|Om|\\Omega|
 
 
 ---
