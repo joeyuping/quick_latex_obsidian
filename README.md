@@ -90,6 +90,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
 e.g. al:\\alpha, be:\\beta
 * **Tip:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
+* **Note:** The system will ignore a shorthand if it is preceeded by an alphabet. eg. "ta" is the shorthand for "\tau. Typing "del**ta**" followed by space will **NOT** trigger the replacement.
 * Below is the list of default shorthand:
 
 |Shorthand|String|Shorthand|String|Shorthand|String|

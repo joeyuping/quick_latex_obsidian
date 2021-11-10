@@ -182,44 +182,49 @@ export default class QuickLatexPlugin extends Plugin {
 						// check for custom shorthand
 						if (this.settings.customShorthand_toggle) {
 							const keyword = editor.getRange(
-								{ line: position.line, ch: position.ch - 2 },
+								{ line: position.line, ch: position.ch - 3 },
 								{ line: position.line, ch: position.ch }
 							)
-							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
-								if (this.shorthand_array[i][0] == keyword) {
-									if (this.shorthand_array[i][1].slice(-2) == "{}") {
-										editor.replaceRange(this.shorthand_array[i][1],
-											{ line: position.line, ch: position.ch - 2 },
-											{ line: position.line, ch: position.ch });
-										editor.setCursor({ line: position.line, 
-											ch: position.ch + this.shorthand_array[i][1].length - 3} );
-										event.preventDefault();
-									} else {
-										editor.replaceRange(this.shorthand_array[i][1],
-											{ line: position.line, ch: position.ch - 2 },
-											{ line: position.line, ch: position.ch });
-									}									
-									return;
-								}
+							if (keyword[0].toLowerCase() == keyword[0].toUpperCase()) {
+								for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+									if (this.shorthand_array[i][0] == keyword.slice(-2)) {
+										const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
+										if (this.shorthand_array[i][1].slice(-2) == "{}") {
+											editor.replaceRange(this.shorthand_array[i][1],
+												{ line: position.line, ch: position.ch - 2 - replace_slash },
+												{ line: position.line, ch: position.ch });
+											editor.setCursor({ line: position.line, 
+												ch: position.ch + this.shorthand_array[i][1].length - 3 - replace_slash} );
+											event.preventDefault();
+										} else {
+											editor.replaceRange(this.shorthand_array[i][1],
+												{ line: position.line, ch: position.ch - 2 - replace_slash },
+												{ line: position.line, ch: position.ch });
+											event.preventDefault();
+										}									
+										return;
+									};
+								};
 							}
-						}
+						};
 
 						// find last unbracketed subscript within last 10 characters and perform autoEncloseSub
 						// ignore expression that contain + - * / ^
 						if (this.settings.autoEncloseSub_toggle) {
 							let last_subscript = current_line.lastIndexOf('_', position.ch);
-							if (last_subscript == -1) return;
-							const letter_after_subscript = editor.getRange(
-								{ line: position.line, ch: last_subscript + 1 },
-								{ line: position.line, ch: last_subscript + 2 });
-							if (letter_after_subscript != "{" && 
-								(position.ch - last_subscript) <= 10 ) {
-								editor.replaceRange("}", position);
-								editor.replaceRange("{", {line:position.line, ch:last_subscript+1});
-								event.preventDefault();
-								return;
-							}
-						}
+							if (last_subscript != -1) {
+								const letter_after_subscript = editor.getRange(
+									{ line: position.line, ch: last_subscript + 1 },
+									{ line: position.line, ch: last_subscript + 2 });
+								if (letter_after_subscript != "{" && 
+									(position.ch - last_subscript) <= 10 ) {
+									editor.replaceRange("}", position);
+									editor.replaceRange("{", {line:position.line, ch:last_subscript+1});
+									event.preventDefault();
+									return;
+								};
+							};
+						};
 					
 						// retrieve the last unbracketed superscript
 						let last_superscript = current_line.lastIndexOf('^', position.ch);
@@ -397,8 +402,8 @@ export default class QuickLatexPlugin extends Plugin {
 					case 'm':
 						if (!this.settings.autoSumLimit_toggle) return;
 						if (editor.getRange(
-							{ line: position.line, ch: position.ch - 2 },
-							{ line: position.line, ch: position.ch }) == 'su') {
+							{ line: position.line, ch: position.ch - 3 },
+							{ line: position.line, ch: position.ch }) == '\\su') {
 							editor.replaceSelection('m\\limits')
 							event.preventDefault()
 							return;
