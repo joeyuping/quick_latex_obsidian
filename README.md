@@ -15,6 +15,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ### 2. Autoclose {}, [], () brackets
 * Typing **"{"**, **"["** and **"("** will automatically close with **"}"**,**"]"** or **")"**.
+* **Note:** This function activates only when the cursor is followed by "$", space, tab, or nothing (end of line).
 
 ### 3. Auto append "\limits" after "\sum"
 * Typing **"\sum"** will automatically append **"\limits"** to shorten the syntax for proper display of the limits for summation symbol.

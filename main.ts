@@ -357,7 +357,11 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						};
 						if (this.settings.autoCloseCurly_toggle) {
-							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+							const next_char = editor.getRange(
+								{ line: position.line, ch: position.ch },
+								{ line: position.line, ch: position.ch+1 })
+							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
 								editor.replaceSelection('{}');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
@@ -374,7 +378,11 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						}
 						if (this.settings.autoCloseSquare_toggle) {
-							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+							const next_char = editor.getRange(
+								{ line: position.line, ch: position.ch },
+								{ line: position.line, ch: position.ch+1 })
+							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
 								editor.replaceSelection('[]');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
@@ -391,7 +399,11 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						};
 						if (this.settings.autoCloseRound_toggle) {
-							if (!this.withinAnyBrackets_inline(editor, brackets)) {
+							const next_char = editor.getRange(
+								{ line: position.line, ch: position.ch },
+								{ line: position.line, ch: position.ch+1 })
+							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
 								editor.replaceSelection('()');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
