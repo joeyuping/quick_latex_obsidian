@@ -181,20 +181,30 @@ export default class QuickLatexPlugin extends Plugin {
 
 						// check for custom shorthand
 						if (this.settings.customShorthand_toggle) {
-							const keyword = editor.getRange(
-								{ line: position.line, ch: position.ch - 3 },
-								{ line: position.line, ch: position.ch }
-							)
-							if (keyword[0].toLowerCase() == keyword[0].toUpperCase()) {
+							let keyword:string = "";
+							if (position.ch==2) {
+								keyword = "@" + editor.getRange(
+									{ line: position.line, ch: position.ch - 2 },
+									{ line: position.line, ch: position.ch });
+							} else {
+								keyword = editor.getRange(
+									{ line: position.line, ch: position.ch - 3 },
+									{ line: position.line, ch: position.ch });
+							}
+							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+								keyword[0] == "@" ) {
 								for (let i = 0 ; i < this.shorthand_array.length ; i++) {
-									if (this.shorthand_array[i][0] == keyword.slice(-2)) {
+									if (this.shorthand_array[i][0] == keyword.slice(-2) && 
+										this.shorthand_array[i][1] != keyword) {
 										const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
 										if (this.shorthand_array[i][1].slice(-2) == "{}") {
 											editor.replaceRange(this.shorthand_array[i][1],
 												{ line: position.line, ch: position.ch - 2 - replace_slash },
 												{ line: position.line, ch: position.ch });
-											editor.setCursor({ line: position.line, 
-												ch: position.ch + this.shorthand_array[i][1].length - 3 - replace_slash} );
+											editor.setCursor(
+												{ line: position.line, 
+												ch: position.ch + this.shorthand_array[i][1].length - 3 - replace_slash}
+												);
 											event.preventDefault();
 										} else {
 											editor.replaceRange(this.shorthand_array[i][1],
