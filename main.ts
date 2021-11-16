@@ -4,8 +4,7 @@ import {
 	Plugin,
 	Editor,
 	PluginSettingTab,
-	Setting,
-	Notice
+	Setting
 } from 'obsidian';
 
 interface QuickLatexSettings {
@@ -579,7 +578,6 @@ export default class QuickLatexPlugin extends Plugin {
 			{line:position.line, ch:position.ch}
 		)
 		const current_brackets = brackets.filter(e => e[1]==prev_char)[0]
-		new Notice((current_brackets.length==0).toString())
 		if (current_brackets.length==0) return;
 		
 		const open_bracket = this.unclosed_bracket(
