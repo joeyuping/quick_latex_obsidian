@@ -4,7 +4,8 @@ import {
 	Plugin,
 	Editor,
 	PluginSettingTab,
-	Setting
+	Setting,
+	Notice
 } from 'obsidian';
 
 interface QuickLatexSettings {
@@ -357,6 +358,13 @@ export default class QuickLatexPlugin extends Plugin {
 			if (this.withinMath(cm, editor)) {
 				const position = editor.getCursor();
 				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+				const next_char = editor.getRange(
+					{ line: position.line, ch: position.ch },
+					{ line: position.line, ch: position.ch+1 });
+				const next_2char = editor.getRange(
+					{ line: position.line, ch: position.ch },
+					{ line: position.line, ch: position.ch+2 });
+				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
 				switch (event.key) {
 					case '{':
 						if (this.settings.encloseSelection_toggle) {
@@ -367,11 +375,7 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						};
 						if (this.settings.autoCloseCurly_toggle) {
-							const next_char = editor.getRange(
-								{ line: position.line, ch: position.ch },
-								{ line: position.line, ch: position.ch+1 })
-							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
-							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('{}');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
@@ -388,11 +392,7 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						}
 						if (this.settings.autoCloseSquare_toggle) {
-							const next_char = editor.getRange(
-								{ line: position.line, ch: position.ch },
-								{ line: position.line, ch: position.ch+1 })
-							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
-							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('[]');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
@@ -409,11 +409,7 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						};
 						if (this.settings.autoCloseRound_toggle) {
-							const next_char = editor.getRange(
-								{ line: position.line, ch: position.ch },
-								{ line: position.line, ch: position.ch+1 })
-							const followed_by_$spacetab_or_none = ['$',' ','	',''].contains(next_char)
-							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetab_or_none) {
+							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('()');
 								editor.setCursor({line:position.line, ch:position.ch+1});
 								event.preventDefault();
@@ -577,43 +573,80 @@ export default class QuickLatexPlugin extends Plugin {
 		event: KeyboardEvent,
 	): void => {
 		const position = editor.getCursor();
-		const current_line = editor.getLine(position.line);
-		const brackets = [['[', ']'], ['(', ')']];
-		let left_array: number[] = [];
-		let right_array: number[] = []
-		for (let i = 0; i < brackets.length; i++) {
-			left_array.push(...this.unclosed_bracket(editor, brackets[i][0], brackets[i][1], position.ch - 1, 0)[1])
-			right_array.push(...this.unclosed_bracket(editor, brackets[i][0], brackets[i][1], current_line.length, position.ch - 1, false)[1])
-		}
-		if (left_array.length > 0 || right_array.length > 0) {
-			const large_operators = ['\\sum', '\\int', '\\frac'];
-			if (
-				large_operators.some(e => current_line.lastIndexOf(e, position.ch - 1) > left_array[0]) == true
-			) {
-				for (let k = right_array.length - 1; k > -1; k--) {
-					// check if unclosed brackets already appended with \right
-					let check_right = editor.getRange(
-						{ line: position.line, ch: right_array[k] - 6 },
-						{ line: position.line, ch: right_array[k] });
-					if (check_right != '\\right') {
-						editor.replaceRange('\\right', { line: position.line, ch: right_array[k] });
-					} else {
-						return;
-					};
-				};
+		let brackets = [['[', ']'], ['(', ')']];
+		const prev_char = editor.getRange(
+			{line:position.line, ch:position.ch-1},
+			{line:position.line, ch:position.ch}
+		)
+		const current_brackets = brackets.filter(e => e[1]==prev_char)[0]
+		new Notice((current_brackets.length==0).toString())
+		if (current_brackets.length==0) return;
+		
+		const open_bracket = this.unclosed_bracket(
+			editor,
+			current_brackets[0],
+			current_brackets[1],
+			position.ch-1,
+			0)[1].slice(-1)[0]
+		const text = editor.getRange(
+			{line:position.line, ch:open_bracket},
+			{line:position.line, ch:position.ch})
+			
+		const large_operators = ['\\sum', '\\int', '\\frac'];
+		let large_operators_locations:number[] = [];
 
-				for (let j = left_array.length - 1; j > -1; j--) {
-					// check if unclosed brackets already appended with \left
-					let check_left = editor.getRange(
-						{ line: position.line, ch: left_array[j] - 5 },
-						{ line: position.line, ch: left_array[j] });
-					if (check_left != '\\left') {
-						editor.replaceRange('\\left', { line: position.line, ch: left_array[j] });
-					} else {
-						return;
-					};
+		for (let i = 0 ; i < large_operators.length ; i++) {
+			let found = 0;
+			while (found != -1) {
+				found = text.indexOf(large_operators[i],found+1)
+				if (found != -1) {
+					large_operators_locations.push(found + open_bracket);
 				};
-				event.preventDefault();
+			};	
+		};
+
+		const current_line = editor.getLine(position.line);
+		for (let i = 0 ; i < large_operators_locations.length ; i++) {
+			let left_array: number[] = [];
+			let right_array: number[] = [];
+			for (let j = 0; j < brackets.length; j++) {
+				left_array.push(
+					...this.unclosed_bracket(
+						editor, 
+						brackets[j][0], 
+						brackets[j][1], 
+						large_operators_locations[i], 
+						0)[1])
+				right_array.push(
+					...this.unclosed_bracket(
+						editor, 
+						brackets[j][0], 
+						brackets[j][1], 
+						current_line.length, 
+						large_operators_locations[i], 
+						false)[1])
+			};
+
+			for (let k = right_array.length - 1; k > -1; k--) {
+				// check if unclosed brackets already appended with \right
+				let check_right = editor.getRange(
+					{ line: position.line, ch: right_array[k] - 6 },
+					{ line: position.line, ch: right_array[k] });
+				if (check_right != '\\right') {
+					editor.replaceRange('\\right', { line: position.line, ch: right_array[k] });
+					event.preventDefault();
+				};
+			};
+
+			for (let l = left_array.length - 1; l > -1; l--) {
+				// check if unclosed brackets already appended with \left
+				let check_left = editor.getRange(
+					{ line: position.line, ch: left_array[l] - 5 },
+					{ line: position.line, ch: left_array[l] });
+				if (check_left != '\\left') {
+					editor.replaceRange('\\left', { line: position.line, ch: left_array[l] });
+					event.preventDefault();
+				};
 			};
 		};
 	};
@@ -664,11 +697,7 @@ export default class QuickLatexPlugin extends Plugin {
 		for (let i = 0; i < text.length; i++) {
 			switch (text[i]) {
 				case open_symbol:
-					if (close_array.length > 0) {
-						close_array.pop()
-					} else {
-						open_array.push(after + i);
-					}
+					open_array.push(after + i);
 					break;
 				case close_symbol:
 					if (open_array.length > 0) {
@@ -730,7 +759,7 @@ export default class QuickLatexPlugin extends Plugin {
 		let count = 0;
 		while (found != -1 && found < cursor_index) {
 			count += 1;
-			from = found + 1;
+			from = found + 2;
 			found = document_text.indexOf('$$', from);
 		}
 		return count % 2 == 1;
