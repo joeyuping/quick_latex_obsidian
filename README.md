@@ -31,8 +31,8 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![auto Enclose Superscript](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_autoEncloseSup.gif)
 
-### [NEW!] 6. Enclose selected expression with brackets
-* Select an expression and press "{", "[" or "(" key will automatically enclose the expression with the brackets.
+### [NEW!] 6. Enclose selected expression with math symbol or brackets
+* Select an expression and press "$", "{", "[" or "(" key will automatically enclose the expression with the math symbol or brackets respectively.
 
 ### 7. Auto Fraction - Type "/" instead of \frac{}{}.
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$**.

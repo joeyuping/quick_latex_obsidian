@@ -140,28 +140,41 @@ export default class QuickLatexPlugin extends Plugin {
 		if (['$', ' ', 'Enter', 'Tab'].contains(event.key)) {
 			switch (event.key) {
 				case '$':
-					// perform autoCloseMath
-					if (this.settings.autoCloseMath_toggle && this.vimAllow_autoCloseMath) {
-						editor.replaceSelection("$");
-					}
+					if (editor.getSelection().length > 0) {
+						if (this.settings.encloseSelection_toggle) {
+							const anchor = editor.getCursor("anchor");
+							const head = editor.getCursor("head");
+							editor.replaceSelection('$' + editor.getSelection() + '$')
+							editor.setSelection(
+								{line:anchor.line,ch:anchor.ch+2}, head
+							)
+							event.preventDefault();
+							return;
+						} 
+					} else {
+						// perform autoCloseMath
+						if (this.settings.autoCloseMath_toggle && this.vimAllow_autoCloseMath) {
+							editor.replaceSelection("$");
+						}
 
-					// perform moveIntoMath
-					if (this.settings.moveIntoMath_toggle) {
-						const position = editor.getCursor();
-						const t = editor.getRange(
-							{ line: position.line, ch: position.ch - 1 },
-							{ line: position.line, ch: position.ch })
-						const t2 = editor.getRange(
-							{ line: position.line, ch: position.ch },
-							{ line: position.line, ch: position.ch + 1 })
-						const t_2 = editor.getRange(
-							{ line: position.line, ch: position.ch - 2 },
-							{ line: position.line, ch: position.ch })
-						if (t == '$' && t2 != '$') {
-							editor.setCursor({ line: position.line, ch: position.ch - 1 })
-						} else if (t_2 == '$$') {
-							editor.setCursor({ line: position.line, ch: position.ch - 1 })
-						};
+						// perform moveIntoMath
+						if (this.settings.moveIntoMath_toggle) {
+							const position = editor.getCursor();
+							const t = editor.getRange(
+								{ line: position.line, ch: position.ch - 1 },
+								{ line: position.line, ch: position.ch })
+							const t2 = editor.getRange(
+								{ line: position.line, ch: position.ch },
+								{ line: position.line, ch: position.ch + 1 })
+							const t_2 = editor.getRange(
+								{ line: position.line, ch: position.ch - 2 },
+								{ line: position.line, ch: position.ch })
+							if (t == '$' && t2 != '$') {
+								editor.setCursor({ line: position.line, ch: position.ch - 1 })
+							} else if (t_2 == '$$') {
+								editor.setCursor({ line: position.line, ch: position.ch - 1 })
+							};
+						}
 					}
 
 					return;
@@ -937,9 +950,9 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Enclose selected expression with brackets {},[],()')
-			.setDesc('Select an expression and press "{", "[" or "(" key will automatically ' +
-				'enclose the expression with the brackets.')
+			.setName('Enclose selected expression with math symbol $$ or brackets {},[],()')
+			.setDesc('Select an expression and press "$", "{", "[" or "(" key will automatically ' +
+				'enclose the expression with the math symbol or brackets respectively.')
 			.addToggle((toggle) => toggle
 				.setValue(this.plugin.settings.encloseSelection_toggle)
 				.onChange(async (value) => {
