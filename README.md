@@ -119,6 +119,9 @@ e.g. al:\\alpha, be:\\beta
 * This is my first Obsidian Plugin project, bugs might be present. Please use with caution.
 * Compatible with builtin vim-mode.
 
+## Known issue:
+* The plugin does not work with the new Live Preview mode right now, but works with another community plugin named "CodeMirror Options" that provides similar functionality as Live Preview.
+
 ---
 ## source code:
 see https://github.com/joeyuping/quick_latex_obsidian
