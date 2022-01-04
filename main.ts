@@ -223,12 +223,6 @@ export default class QuickLatexPlugin extends Plugin {
 
 					// retrieve the last divide symbol
 					let last_divide = current_line.lastIndexOf('/', position.ch - 1);
-					while (editor.getRange(
-						{ line: position.line, ch: last_divide - 1 },
-						{ line: position.line, ch: last_divide }
-						) == '\\') {
-						last_divide = current_line.lastIndexOf('/', last_divide - 1);
-					}
 
 					// perform autoEncloseSup
 					if (this.settings.autoEncloseSup_toggle) {
