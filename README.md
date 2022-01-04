@@ -97,7 +97,7 @@ e.g. al:\\alpha, be:\\beta
 |Shorthand|String|Shorthand|String|Shorthand|String|
 |:-------:|:----:|:-------:|:----:|:-------:|:----:|
 |sq|\\sqrt{}|bb|\\mathbb{}|bf|\\mathbf{}|
-|te|\\text{}|
+|te|\\text{}|in|\\infty
 |cd|\\cdot|qu|\\quad|ti|\\times|
 |al|\\alpha|be|\\beta|ga|\\gamma|
 |Ga|\\Gamma|de|\\delta|De|\\Delta|
@@ -118,9 +118,6 @@ e.g. al:\\alpha, be:\\beta
 * The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime!
 * This is my first Obsidian Plugin project, bugs might be present. Please use with caution.
 * Compatible with builtin vim-mode.
-
-## Known issue:
-* The plugin does not work with the new Live Preview mode right now, but works with another community plugin named "CodeMirror Options" that provides similar functionality as Live Preview.
 
 ---
 ## source code:

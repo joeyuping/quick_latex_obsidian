@@ -1,3 +1,5 @@
+import { Extension, StateField } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 import * as CodeMirror from 'codemirror';
 import * as Moment from 'moment';
 
@@ -51,7 +53,7 @@ declare global {
 declare global {
     interface Element {
         getText(): string;
-        setText(val: string): void;
+        setText(val: string | DocumentFragment): void;
     }
 }
 declare global {
@@ -90,6 +92,13 @@ declare global {
         hide(): void;
         toggle(show: boolean): void;
         toggleVisibility(visible: boolean): void;
+        /**
+         * Returns whether this element is shown, when the element is attached to the DOM and
+         * none of the parent and ancestor elements are hidden with `display: none`.
+         *
+         * Exception: Does not work on <body> and <html>, or on elements with `position: fixed`.
+         */
+        isShown(): boolean;
     }
 }
 declare global {
@@ -120,7 +129,7 @@ declare global {
         /**
          * The textContent to be assigned.
          */
-        text?: string;
+        text?: string | DocumentFragment;
         /**
          * HTML attributes to be added.
          */
@@ -167,6 +176,12 @@ declare global {
         on<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
         off<K extends keyof HTMLElementEventMap>(this: HTMLElement, type: K, selector: string, listener: (this: HTMLElement, ev: HTMLElementEventMap[K], delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void;
         onClickEvent(this: HTMLElement, listener: (this: HTMLElement, ev: MouseEvent) => any, options?: boolean | AddEventListenerOptions): void;
+        /**
+         * @param listener - the callback to call when this node is inserted into the DOM.
+         * @param once - if true, this will only fire once and then unhook itself.
+         * @returns destroy - a function to remove the event handler to avoid memory leaks.
+         */
+        onNodeInserted(this: HTMLElement, listener: () => any, once?: boolean): () => void;
         trigger(eventType: string): void;
     }
     interface Document {
@@ -185,6 +200,7 @@ export interface AjaxOptions {
     data?: object | string | ArrayBuffer;
     headers?: Record<string, string>;
     withCredentials?: boolean;
+    req?: XMLHttpRequest;
 }
 declare global {
     function ajax(options: AjaxOptions): void;
@@ -243,7 +259,12 @@ export function addIcon(iconId: string, svgContent: string): void;
  * @public
  */
 export class App {
-
+    
+    /** @public */
+    keymap: Keymap;
+    /** @public */
+    scope: Scope;
+    
     /** @public */
     workspace: Workspace;
 
@@ -254,6 +275,12 @@ export class App {
 
     /** @public */
     fileManager: FileManager;
+
+    /**
+     * The last known user interaction event, to help commands find out what modifier keys are pressed.
+     * @public
+     */
+    lastEvent: UserEvent | null;
 
 }
 
@@ -458,7 +485,8 @@ export interface Command {
      */
     editorCheckCallback?: (checking: boolean, editor: Editor, view: MarkdownView) => boolean | void;
     /**
-     * Sets the default hotkey
+     * Sets the default hotkey. It is recommended for plugins to avoid setting default hotkeys if possible,
+     * to avoid conflicting hotkeys with one that's set by the user, even though customized hotkeys have higher priority.
      * @public
      */
     hotkeys?: Hotkey[];
@@ -536,7 +564,7 @@ export class Component {
      * Use {@link window.setInterval} instead of {@link setInterval} to avoid TypeScript confusing between NodeJS vs Browser API
      * @public
      */
-    registerInterval(id: number): void;
+    registerInterval(id: number): number;
 }
 
 /**
@@ -586,6 +614,10 @@ export interface DataAdapter {
      * @public
      */
     writeBinary(normalizedPath: string, data: ArrayBuffer, options?: DataWriteOptions): Promise<void>;
+    /**
+     * @public
+     */
+    append(normalizedPath: string, data: string, options?: DataWriteOptions): Promise<void>;
     /**
      * @public
      */
@@ -731,7 +763,7 @@ export abstract class Editor {
     /** @public */
     abstract getRange(from: EditorPosition, to: EditorPosition): string;
     /** @public */
-    abstract replaceSelection(replacement: string): void;
+    abstract replaceSelection(replacement: string, origin?: string): void;
     /** @public */
     abstract replaceRange(replacement: string, from: EditorPosition, to?: EditorPosition, origin?: string): void;
     /** @public */
@@ -760,7 +792,7 @@ export abstract class Editor {
     /** @public */
     abstract scrollTo(x?: number | null, y?: number | null): void;
     /** @public */
-    abstract scrollIntoView(range: EditorRange, margin?: number): void;
+    abstract scrollIntoView(range: EditorRange, center?: boolean): void;
     /** @public */
     abstract undo(): void;
     /** @public */
@@ -768,7 +800,9 @@ export abstract class Editor {
     /** @public */
     abstract exec(command: EditorCommandName): void;
     /** @public */
-    abstract transaction(tx: EditorTransaction): void;
+    abstract transaction(tx: EditorTransaction, origin?: string): void;
+    /** @public */
+    abstract wordAt(pos: EditorPosition): EditorRange | null;
     /** @public */
     abstract posToOffset(pos: EditorPosition): number;
     /** @public */
@@ -784,6 +818,12 @@ export interface EditorChange extends EditorRangeOrCaret {
 
 /** @public */
 export type EditorCommandName = 'goUp' | 'goDown' | 'goLeft' | 'goRight' | 'goStart' | 'goEnd' | 'indentMore' | 'indentLess' | 'newlineAndIndent' | 'swapLineUp' | 'swapLineDown' | 'deleteLine' | 'toggleFold' | 'foldAll' | 'unfoldAll';
+
+/**
+ * Use this StateField to get a reference to the EditorView
+ * @public
+ */
+export const editorEditorField: StateField<EditorView>;
 
 /** @public */
 export interface EditorPosition {
@@ -826,6 +866,72 @@ export interface EditorSelectionOrCaret {
 }
 
 /** @public */
+export abstract class EditorSuggest<T> extends PopoverSuggest<T> {
+    /**
+     * Current suggestion context, containing the result of `onTrigger`.
+     * This will be null any time the EditorSuggest is not supposed to run.
+     * @public
+     */
+    context: EditorSuggestContext | null;
+    /**
+     * Override this to use a different limit for suggestion items
+     * @public
+     */
+    limit: number;
+    /** @public */
+    constructor(app: App);
+    /**
+     * @public
+     */
+    setInstructions(instructions: Instruction[]): void;
+    
+    /**
+     * Based on the editor line and cursor position, determine if this EditorSuggest should be triggered at this moment.
+     * Typically, you would run a regular expression on the current line text before the cursor.
+     * Return null to indicate that this editor suggest is not supposed to be triggered.
+     *
+     * Please be mindful of performance when implementing this function, as it will be triggered very often (on each keypress).
+     * Keep it simple, and return null as early as possible if you determine that it is not the right time.
+     * @public
+     */
+    abstract onTrigger(cursor: EditorPosition, editor: Editor, file: TFile): EditorSuggestTriggerInfo | null;
+    /**
+     * Generate suggestion items based on this context. Can be async, but preferably sync.
+     * When generating async suggestions, you should pass the context along.
+     * @public
+     */
+    abstract getSuggestions(context: EditorSuggestContext): T[] | Promise<T[]>;
+
+}
+
+/** @public */
+export interface EditorSuggestContext extends EditorSuggestTriggerInfo {
+    /** @public */
+    editor: Editor;
+    /** @public */
+    file: TFile;
+}
+
+/** @public */
+export interface EditorSuggestTriggerInfo {
+    /**
+     * The start position of the triggering text. This is used to position the popover.
+     * @public
+     */
+    start: EditorPosition;
+    /**
+     * The end position of the triggering text. This is used to position the popover.
+     * @public
+     */
+    end: EditorPosition;
+    /**
+     * They query string (usually the text between start and end) that will be used to generate the suggestion content.
+     * @public
+     */
+    query: string;
+}
+
+/** @public */
 export interface EditorTransaction {
     /** @public */
     replaceSelection?: string;
@@ -839,6 +945,12 @@ export interface EditorTransaction {
     /** @public */
     selection?: EditorRangeOrCaret;
 }
+
+/**
+ * Use this StateField to get a reference to the MarkdownView
+ * @public
+ */
+export const editorViewField: StateField<MarkdownView>;
 
 /**
  * @public
@@ -1004,6 +1116,10 @@ export class FileSystemAdapter implements DataAdapter {
      * @public
      */
     writeBinary(normalizedPath: string, data: ArrayBuffer, options?: DataWriteOptions): Promise<void>;
+    /**
+     * @public
+     */
+    append(normalizedPath: string, data: string, options?: DataWriteOptions): Promise<void>;
     
     /**
      * @public
@@ -1107,6 +1223,12 @@ export abstract class FileView extends ItemView {
      */
     canAcceptExtension(extension: string): boolean;
 }
+
+/**
+ * Flush the MathJax stylesheet.
+ * @public
+ */
+export function finishRenderMath(): Promise<void>;
 
 /**
  * @public
@@ -1262,10 +1384,12 @@ export interface Instruction {
  */
 export interface ISuggestOwner<T> {
     /**
+     * Render the suggestion item into DOM.
      * @public
      */
     renderSuggestion(value: T, el: HTMLElement): void;
     /**
+     * Called when the user makes a selection.
      * @public
      */
     selectSuggestion(value: T, evt: MouseEvent | KeyboardEvent): void;
@@ -1312,6 +1436,27 @@ export function iterateCacheRefs(cache: CachedMetadata, cb: (ref: ReferenceCache
  * @public
  */
 export function iterateRefs(refs: ReferenceCache[], cb: (ref: ReferenceCache) => boolean | void): boolean;
+
+/** @public */
+export class Keymap {
+
+    /** @public */
+    pushScope(scope: Scope): void;
+    /** @public */
+    popScope(scope: Scope): void;
+
+    /**
+     * Checks whether the modifier key is pressed during this event
+     * @public
+     */
+    static isModifier(evt: MouseEvent | TouchEvent | KeyboardEvent, modifier: Modifier): boolean;
+    
+    /**
+     * Returns true if the modifier key Cmd/Ctrl is pressed OR if this is a middle-click MouseEvent.
+     * @public
+     * */
+    static isModEvent(evt?: UserEvent | null): boolean;
+}
 
 /**
  * @public
@@ -1390,6 +1535,33 @@ export interface ListItemCache extends CacheItem {
      */
     parent: number;
 }
+
+/**
+ * Load MathJax.
+ * @public
+ */
+export function loadMathJax(): Promise<void>;
+
+/**
+ * Load Mermaid and return a promise to the global mermaid object.
+ * Can also use `mermaid` after this promise resolves to get the same reference.
+ * @public
+ */
+export function loadMermaid(): Promise<any>;
+
+/**
+ * Load PDF.js and return a promise to the global pdfjsLib object.
+ * Can also use `window.pdfjsLib` after this promise resolves to get the same reference.
+ * @public
+ */
+export function loadPdfJs(): Promise<any>;
+
+/**
+ * Load Prism.js and return a promise to the global Prism object.
+ * Can also use `Prism` after this promise resolves to get the same reference.
+ * @public
+ */
+export function loadPrism(): Promise<any>;
 
 /**
  * @public
@@ -1505,9 +1677,7 @@ export interface MarkdownPostProcessorContext {
 
 }
 
-/**
- * @public
- */
+/** @public **/
 export interface MarkdownPreviewEvents extends Component {
 
 }
@@ -1530,6 +1700,7 @@ export class MarkdownPreviewRenderer {
      * @public
      */
     static createCodeBlockPostProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void): (el: HTMLElement, ctx: MarkdownPostProcessorContext) => void;
+    
 }
 
 /**
@@ -1700,11 +1871,7 @@ export class MarkdownView extends TextFileView {
      * @public
      */
     editor: Editor;
-    /**
-     * @public
-     */
-    sourceMode: MarkdownSourceView;
-    
+
     /**
      * @public
      */
@@ -1714,7 +1881,7 @@ export class MarkdownView extends TextFileView {
      * @public
      */
     currentMode: MarkdownSubView;
-    
+
     /**
      * @public
      */
@@ -1754,7 +1921,7 @@ export class MarkdownView extends TextFileView {
 /**
  * @public
  */
-export type MarkdownViewModeType = 'source' | 'preview' | 'live';
+export type MarkdownViewModeType = 'source' | 'preview';
 
 /**
  * @public
@@ -1794,6 +1961,7 @@ export class Menu extends Component {
      * @public
      */
     onHide(callback: () => any): void;
+
 }
 
 /**
@@ -1829,7 +1997,8 @@ export class MenuItem {
     /**
      * @public
      */
-    onClick(callback: (evt: MouseEvent) => any): this;
+    onClick(callback: (evt: MouseEvent | KeyboardEvent) => any): this;
+    
 }
 
 /**
@@ -1883,7 +2052,7 @@ export class MetadataCache extends Events {
      * Called when a file has been indexed, and its (updated) cache is now available.
      * @public
      */
-    on(name: 'changed', callback: (file: TFile) => any, ctx?: any): EventRef;
+    on(name: 'changed', callback: (file: TFile, data: string, cache: CachedMetadata) => any, ctx?: any): EventRef;
 
     /**
      * Called when a file has been resolved for `resolvedLinks` and `unresolvedLinks`.
@@ -2012,8 +2181,12 @@ export class Notice {
     /**
      * @public
      */
-    constructor(message: string, timeout?: number);
-    
+    constructor(message: string | DocumentFragment, timeout?: number);
+    /**
+     * Change the message of this notice.
+     * @public
+     */
+    setMessage(message: string | DocumentFragment): this;
     /**
      * @public
      */
@@ -2173,20 +2346,26 @@ export abstract class Plugin_2 extends Component {
     /**
      * @public
      */
-    registerMarkdownPostProcessor(postProcessor: MarkdownPostProcessor): MarkdownPostProcessor;
+    registerMarkdownPostProcessor(postProcessor: MarkdownPostProcessor, sortOrder?: number): MarkdownPostProcessor;
     /**
      * Register a special post processor that handles fenced code given a language and a handler.
      * This special post processor takes care of removing the <pre><code> and create a <div> that
      * will be passed to your handler, and is expected to be filled with your custom elements.
      * @public
      */
-    registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void): MarkdownPostProcessor;
+    registerMarkdownCodeBlockProcessor(language: string, handler: (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => Promise<any> | void, sortOrder?: number): MarkdownPostProcessor;
     /**
      * Runs callback on all currently loaded instances of CodeMirror,
      * then registers the callback for all future CodeMirror instances.
      * @public
      */
     registerCodeMirror(callback: (cm: CodeMirror.Editor) => any): void;
+    /**
+     * Registers a CodeMirror 6 extension.
+     * @param extension - must be a CodeMirror 6 `Extension`, or an array of Extensions.
+     * @public
+     */
+    registerEditorExtension(extension: Extension): void;
     /**
      * Register a handler for obsidian:// URLs.
      * @param action - the action string. For example, "open" corresponds to `obsidian://open`.
@@ -2195,6 +2374,11 @@ export abstract class Plugin_2 extends Component {
      * @public
      */
     registerObsidianProtocolHandler(action: string, handler: ObsidianProtocolHandler): void;
+    /**
+     * Register an EditorSuggest which can provide live suggestions while the user is typing.
+     * @public
+     */
+    registerEditorSuggest(editorSuggest: EditorSuggest<any>): void;
     /**
      * @public
      */
@@ -2281,6 +2465,28 @@ export enum PopoverState {
 
 }
 
+/** @public */
+export abstract class PopoverSuggest<T> implements ISuggestOwner<T>, CloseableComponent {
+
+    /** @public */
+    constructor(app: App, scope?: Scope);
+    /** @public */
+    open(): void;
+    /** @public */
+    close(): void;
+
+    /**
+     * @inheritDoc
+     * @public
+     */
+    abstract renderSuggestion(value: T, el: HTMLElement): void;
+    /**
+     * @inheritDoc
+     * @public
+     */
+    abstract selectSuggestion(value: T, evt: MouseEvent | KeyboardEvent): void;
+}
+
 /**
  * @public
  */
@@ -2308,9 +2514,27 @@ export interface PreparedQuery {
 }
 
 /**
+ * Construct a fuzzy search callback that runs on a target string.
+ * Performance may be an issue if you are running the search for more than a few thousand times.
+ * If performance is a problem, consider using `prepareSimpleSearch` instead.
+ * @param query - the fuzzy query.
+ * @return fn - the callback function to apply the search on.
+ * @public
+ */
+export function prepareFuzzySearch(query: string): (text: string) => SearchResult | null;
+
+/**
  * @public
  */
 export function prepareQuery(query: string): PreparedQuery;
+
+/**
+ * Construct a simple search callback that runs on a target string.
+ * @param query - the space-separated words
+ * @return fn - the callback function to apply the search on
+ * @public
+ */
+export function prepareSimpleSearch(query: string): (text: string) => SearchResult | null;
 
 /**
  * @public
@@ -2356,7 +2580,14 @@ export interface ReferenceCache extends CacheItem {
 /**
  * @public
  */
-export function renderMatches(el: HTMLElement, text: string, matches: SearchMatches | null, offset?: number): void;
+export function renderMatches(el: HTMLElement | DocumentFragment, text: string, matches: SearchMatches | null, offset?: number): void;
+
+/**
+ * Render some LaTeX math using the MathJax engine. Returns an HTMLElement.
+ * Requires calling `finishRenderMath` when rendering is all done to flush the MathJax stylesheet.
+ * @public
+ */
+export function renderMath(source: string, display: boolean): HTMLElement;
 
 /**
  * @public
@@ -2376,6 +2607,8 @@ export interface RequestParam {
     contentType?: string;
     /** @public */
     body?: string;
+    /** @public */
+    headers?: Record<string, string>;
 }
 
 /**
@@ -2383,11 +2616,19 @@ export interface RequestParam {
  */
 export function resolveSubpath(cache: CachedMetadata, subpath: string): HeadingSubpathResult | BlockSubpathResult;
 
+/** @public */
+export function sanitizeHTMLToDom(html: string): DocumentFragment;
+
 /**
  * @public
  */
 export class Scope {
 
+    /**
+     * @public
+     */
+    constructor(parent?: Scope);
+    
     /**
      * @public
      * @param modifiers - `Mod`, `Ctrl`, `Meta`, `Shift`, or `Alt`. `Mod` translates to `Meta` on macOS and `Ctrl` otherwise.
@@ -2498,7 +2739,7 @@ export class Setting {
     /**
      * @public
      */
-    setName(name: string): this;
+    setName(name: string | DocumentFragment): this;
     /**
      * @public
      */
@@ -2560,6 +2801,10 @@ export class Setting {
      * @public
      */
     then(cb: (setting: this) => any): this;
+    /**
+     * @public
+     */
+    clear(): this;
 }
 
 /**
@@ -2658,6 +2903,12 @@ export interface Stat {
 
 /** @public */
 export function stringifyYaml(obj: any): string;
+
+/**
+ * This function normalizes headings for link matching by stripping out special characters and shrinking consecutive spaces.
+ * @public
+ */
+export function stripHeading(heading: string): string;
 
 /**
  * @public
@@ -2940,6 +3191,9 @@ export class ToggleComponent extends ValueComponent<boolean> {
     onChange(callback: (value: boolean) => any): this;
 }
 
+/** @public */
+export type UserEvent = MouseEvent | KeyboardEvent | TouchEvent | PointerEvent;
+
 /**
  * @public
  */
@@ -3044,6 +3298,10 @@ export class Vault extends Events {
      * @public
      */
     modifyBinary(file: TFile, data: ArrayBuffer, options?: DataWriteOptions): Promise<void>;
+    /**
+     * @public
+     */
+    append(file: TFile, data: string, options?: DataWriteOptions): Promise<void>;
     /**
      * @public
      */
@@ -3291,7 +3549,7 @@ export class Workspace extends Events {
     /**
      * @public
      */
-    duplicateLeaf(leaf: WorkspaceLeaf, direction?: SplitDirection): Promise<void>;
+    duplicateLeaf(leaf: WorkspaceLeaf, direction?: SplitDirection): Promise<WorkspaceLeaf>;
     /**
      * @public
      */
@@ -3400,18 +3658,40 @@ export class Workspace extends Events {
      */
     on(name: 'layout-change', callback: () => any, ctx?: any): EventRef;
     /**
+     * Triggered when the CSS of the app has changed.
      * @public
      */
     on(name: 'css-change', callback: () => any, ctx?: any): EventRef;
     /**
+     * Triggered when the user opens the context menu on a file.
      * @public
      */
     on(name: 'file-menu', callback: (menu: Menu, file: TAbstractFile, source: string, leaf?: WorkspaceLeaf) => any, ctx?: any): EventRef;
     
     /**
+     * Triggered when the user opens the context menu on an editor.
      * @public
      */
     on(name: 'editor-menu', callback: (menu: Menu, editor: Editor, view: MarkdownView) => any, ctx?: any): EventRef;
+    /**
+     * Triggered when changes to an editor has been applied, either programmatically or from a user event.
+     * @public
+     */
+    on(name: 'editor-change', callback: (editor: Editor, markdownView: MarkdownView) => any, ctx?: any): EventRef;
+    /**
+     * Triggered when the editor receives a paste event.
+     * Check for `evt.defaultPrevented` before attempting to handle this event, and return if it has been already handled.
+     * Use `evt.preventDefault()` to indicate that you've handled the event.
+     * @public
+     */
+    on(name: 'editor-paste', callback: (evt: ClipboardEvent, editor: Editor, markdownView: MarkdownView) => any, ctx?: any): EventRef;
+    /**
+     * Triggered when the editor receives a drop event.
+     * Check for `evt.defaultPrevented` before attempting to handle this event, and return if it has been already handled.
+     * Use `evt.preventDefault()` to indicate that you've handled the event.
+     * @public
+     */
+    on(name: 'editor-drop', callback: (evt: DragEvent, editor: Editor, markdownView: MarkdownView) => any, ctx?: any): EventRef;
 
     /**
      * @public
@@ -3419,6 +3699,8 @@ export class Workspace extends Events {
     on(name: 'codemirror', callback: (cm: CodeMirror.Editor) => any, ctx?: any): EventRef;
 
     /**
+     * Triggered when the app is about to quit. Not guaranteed to actually run.
+     * Perform some best effort cleanup here.
      * @public
      */
     on(name: 'quit', callback: (tasks: Tasks) => any, ctx?: any): EventRef;
