@@ -121,7 +121,7 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-				editor.getCursor()
+
 				// Tab shortcut for matrix block
 				if (this.settings.addMatrixBlock_toggle) {
 					if (this.withinAnyBrackets_document(editor,
@@ -132,6 +132,7 @@ export default class QuickLatexPlugin extends Plugin {
 						return true
 					};
 				}
+
 				return false
 			},
 		},
@@ -294,6 +295,9 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
+				
+				if (!this.withinMath(editor)) return false
+
 				const position = editor.getCursor();
 				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 				const next_char = editor.getRange(
@@ -329,6 +333,9 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
+				
+				if (!this.withinMath(editor)) return false
+
 				const position = editor.getCursor();
 				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 				const next_char = editor.getRange(
@@ -338,7 +345,7 @@ export default class QuickLatexPlugin extends Plugin {
 					{ line: position.line, ch: position.ch },
 					{ line: position.line, ch: position.ch+2 });
 				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
-
+				
 				if (this.settings.encloseSelection_toggle) {
 					if (editor.getSelection().length > 0) {
 						editor.replaceSelection('[' + editor.getSelection() + ']');
@@ -364,6 +371,9 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
+				
+				if (!this.withinMath(editor)) return false
+				
 				const position = editor.getCursor();
 				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 				const next_char = editor.getRange(
@@ -399,6 +409,9 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
+				
+				if (!this.withinMath(editor)) return false
+				
 				const position = editor.getCursor();
 
 				if (!this.settings.autoSumLimit_toggle) return;
