@@ -136,6 +136,7 @@ export default class QuickLatexPlugin extends Plugin {
 						return true
 					};
 				}
+
 				return false
 			},
 		},
@@ -384,6 +385,9 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
+				
+				if (!this.withinMath(editor)) return false
+				
 				const position = editor.getCursor();
 
 				if (!this.settings.autoSumLimit_toggle) return;
