@@ -1,6 +1,6 @@
 # Quick Latex for Obsidian
 
-**Now works with the new Obsidian preview mode!!**
+**【Now works with the new Obsidian preview mode!!】**
 
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
