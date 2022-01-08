@@ -1275,6 +1275,18 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Enclose selected expression with math symbol $$')
+			.setDesc('Select an expression and press "$" key will automatically ' +
+				'enclose the expression with the math symbols.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.encloseSelection_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.encloseSelection_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
 			.setName('Autoclose {} curly brackets')
 			.setDesc('Typing "{" will automatically close with "}"')
 			.addToggle((toggle) => toggle
@@ -1353,18 +1365,6 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.autoEncloseSub_toggle)
 				.onChange(async (value) => {
 					this.plugin.settings.autoEncloseSub_toggle = value;
-					await this.plugin.saveData(this.plugin.settings);
-					this.display();
-				}));
-
-		new Setting(containerEl)
-			.setName('Enclose selected expression with math symbol $$ or brackets {},[],()')
-			.setDesc('Select an expression and press "$", "{", "[" or "(" key will automatically ' +
-				'enclose the expression with the math symbol or brackets respectively.')
-			.addToggle((toggle) => toggle
-				.setValue(this.plugin.settings.encloseSelection_toggle)
-				.onChange(async (value) => {
-					this.plugin.settings.encloseSelection_toggle = value;
 					await this.plugin.saveData(this.plugin.settings);
 					this.display();
 				}));

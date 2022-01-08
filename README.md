@@ -1,5 +1,7 @@
 # Quick Latex for Obsidian
 
+**Now works with the new Obsidian preview mode!!**
+
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
 
@@ -31,8 +33,8 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![auto Enclose Superscript](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_autoEncloseSup.gif)
 
-### [NEW!] 6. Enclose selected expression with math symbol or brackets
-* Select an expression and press "$", "{", "[" or "(" key will automatically enclose the expression with the math symbol or brackets respectively.
+### 6. Enclose selected expression with math symbol
+* Select an expression and press "$" key will automatically enclose the expression with the math symbols.
 
 ### 7. Auto Fraction - Type "/" instead of \frac{}{}.
 * Type **\$e/2\$** followed by a **"space" key** will automatically replace the expression with **\$\frac{e}{2}\$**.
@@ -86,7 +88,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo%20gif/g_matrixblock.gif)
 
-### **[NEW]** 10. Custom shorthand
+### 10. Custom shorthand
 * Use two-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
 * You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
 e.g. al:\\alpha, be:\\beta
