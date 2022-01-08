@@ -13,4 +13,7 @@ main.js
 # obsidian
 data.json
 
-output/*
+# self
+demo_gif
+backup
+output
