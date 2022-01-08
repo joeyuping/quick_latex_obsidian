@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, in:\\infty"+
+	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, in:\\infty, "+
 							"cd:\\cdot, qu:\\quad, ti:\\times, "+
 							"al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
@@ -80,9 +80,13 @@ export default class QuickLatexPlugin extends Plugin {
 						const anchor = editor.getCursor("anchor")
 						const head = editor.getCursor("head")
 						editor.replaceSelection(`$${editor.getSelection()}$`)
-						editor.setSelection(
-							{line:anchor.line,ch:anchor.ch+2}, head
-						)
+						if (anchor.line > head.line) {
+							editor.setSelection({line:anchor.line,ch:anchor.ch},{line:head.line,ch:head.ch+1})
+						} else if (anchor.line < head.line) {
+							editor.setSelection({line:anchor.line,ch:anchor.ch+1},{line:head.line,ch:head.ch})
+						} else {
+							editor.setSelection({line:anchor.line,ch:anchor.ch+1},{line:head.line,ch:head.ch+1})
+						}
 						return true
 					}
 					return false
@@ -121,7 +125,7 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-				editor.getCursor()
+
 				// Tab shortcut for matrix block
 				if (this.settings.addMatrixBlock_toggle) {
 					if (this.withinAnyBrackets_document(editor,
@@ -268,7 +272,6 @@ export default class QuickLatexPlugin extends Plugin {
 						'\\end{' + this.settings.addMatrixBlock_parameter
 					)) {
 						editor.replaceSelection(' \\\\ ')
-						// shift doesn't need to be considered as this doesn't run w/ shift
 						return true;
 					}
 				}
@@ -284,8 +287,6 @@ export default class QuickLatexPlugin extends Plugin {
 				}
 				return false
 			},
-			shift: () => false, // idk if this is needed but it's 2am and I have math due at 7 so...
-
 		},
 		{
 			key: '{',
@@ -294,30 +295,25 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-				const position = editor.getCursor();
-				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
-				const next_char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+1 });
-				const next_2char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+2 });
-				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
 
-				if (this.settings.encloseSelection_toggle) {
-					if (editor.getSelection().length > 0) {
-						editor.replaceSelection('{' + editor.getSelection() + '}')
-						return true;
-					}
-				};
-				if (this.settings.autoCloseCurly_toggle) {
-					if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
-						editor.replaceSelection('{}');
-						editor.setCursor({line:position.line, ch:position.ch+1});
-						return true;
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseCurly_toggle) {
+						const position = editor.getCursor();
+						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+						const next_char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+1 });
+						const next_2char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+2 });
+						const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
+						if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
+							editor.replaceSelection('{}');
+							editor.setCursor({line:position.line, ch:position.ch+1});
+							return true;
+						};
 					};
-				}
-
+				};
 				return false
 			},
 
@@ -329,30 +325,25 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-				const position = editor.getCursor();
-				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
-				const next_char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+1 });
-				const next_2char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+2 });
-				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
 
-				if (this.settings.encloseSelection_toggle) {
-					if (editor.getSelection().length > 0) {
-						editor.replaceSelection('[' + editor.getSelection() + ']');
-						return true;
-					}
-				}
-				if (this.settings.autoCloseSquare_toggle) {
-					if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
-						editor.replaceSelection('[]');
-						editor.setCursor({line:position.line, ch:position.ch+1});
-						return true;
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseSquare_toggle) {
+						const position = editor.getCursor();
+						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+						const next_char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+1 });
+						const next_2char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+2 });
+						const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
+						if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
+							editor.replaceSelection('[]');
+							editor.setCursor({line:position.line, ch:position.ch+1});
+							return true;
+						};
 					};
-				}
-
+				};
 				return false
 			},
 
@@ -364,30 +355,25 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-				const position = editor.getCursor();
-				const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
-				const next_char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+1 });
-				const next_2char = editor.getRange(
-					{ line: position.line, ch: position.ch },
-					{ line: position.line, ch: position.ch+2 });
-				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
 
-				if (this.settings.encloseSelection_toggle) {
-					if (editor.getSelection().length > 0) {
-						editor.replaceSelection('(' + editor.getSelection() + ')');
-						return true;
-					}
-				};
-				if (this.settings.autoCloseRound_toggle) {
-					if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
-						editor.replaceSelection('()');
-						editor.setCursor({line:position.line, ch:position.ch+1});
-						return true;
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseRound_toggle) {
+						const position = editor.getCursor();
+						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+						const next_char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+1 });
+						const next_2char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch+2 });
+						const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
+						if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
+							editor.replaceSelection('()');
+							editor.setCursor({line:position.line, ch:position.ch+1});
+							return true;
+						};
 					};
-				}
-
+				};
 				return false
 			},
 
@@ -402,13 +388,14 @@ export default class QuickLatexPlugin extends Plugin {
 				const position = editor.getCursor();
 
 				if (!this.settings.autoSumLimit_toggle) return;
-				if (editor.getRange(
-					{ line: position.line, ch: position.ch - 3 },
-					{ line: position.line, ch: position.ch }) == '\\su') {
-					editor.replaceSelection('m\\limits')
-					return true;
+				if (this.withinMath(editor)) {
+					if (editor.getRange(
+						{ line: position.line, ch: position.ch - 3 },
+						{ line: position.line, ch: position.ch }) == '\\su') {
+						editor.replaceSelection('m\\limits')
+						return true;
+					};
 				};
-
 				return false
 			},
 		},
@@ -485,9 +472,13 @@ export default class QuickLatexPlugin extends Plugin {
 							const anchor = editor.getCursor("anchor");
 							const head = editor.getCursor("head");
 							editor.replaceSelection('$' + editor.getSelection() + '$')
-							editor.setSelection(
-								{line:anchor.line,ch:anchor.ch+2}, head
-							)
+							if (anchor.line > head.line) {
+								editor.setSelection({line:anchor.line,ch:anchor.ch},{line:head.line,ch:head.ch+1})
+							} else if (anchor.line < head.line) {
+								editor.setSelection({line:anchor.line,ch:anchor.ch+1},{line:head.line,ch:head.ch})
+							} else {
+								editor.setSelection({line:anchor.line,ch:anchor.ch+1},{line:head.line,ch:head.ch+1})
+							}
 							event.preventDefault();
 							return;
 						} 
@@ -710,13 +701,6 @@ export default class QuickLatexPlugin extends Plugin {
 				const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
 				switch (event.key) {
 					case '{':
-						if (this.settings.encloseSelection_toggle) {
-							if (editor.getSelection().length > 0) {
-								editor.replaceSelection('{' + editor.getSelection() + '}')
-								event.preventDefault();
-								return;
-							}
-						};
 						if (this.settings.autoCloseCurly_toggle) {
 							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('{}');
@@ -727,13 +711,6 @@ export default class QuickLatexPlugin extends Plugin {
 						}
 						return;
 					case '[':
-						if (this.settings.encloseSelection_toggle) {
-							if (editor.getSelection().length > 0) {
-								editor.replaceSelection('[' + editor.getSelection() + ']');
-								event.preventDefault();
-								return;
-							}
-						}
 						if (this.settings.autoCloseSquare_toggle) {
 							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('[]');
@@ -744,13 +721,6 @@ export default class QuickLatexPlugin extends Plugin {
 						}
 						return;
 					case '(':
-						if (this.settings.encloseSelection_toggle) {
-							if (editor.getSelection().length > 0) {
-								editor.replaceSelection('(' + editor.getSelection() + ')');
-								event.preventDefault()
-								return;
-							}
-						};
 						if (this.settings.autoCloseRound_toggle) {
 							if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 								editor.replaceSelection('()');
@@ -805,8 +775,6 @@ export default class QuickLatexPlugin extends Plugin {
 				event.preventDefault()
 				return true;
 			} else {
-				// const last_divide = current_line.indexOf('/', last_superscript) == -1 ? 999 : current_line.indexOf('/', last_superscript);
-				// const sup_close_index = Math.min(last_divide, position.ch);
 				editor.replaceSelection('}');
 				editor.replaceRange('{', { line: position.line, ch: last_superscript + 1 });
 				event.preventDefault()
