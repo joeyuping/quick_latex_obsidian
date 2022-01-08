@@ -346,7 +346,6 @@ export default class QuickLatexPlugin extends Plugin {
 				};
 				return false
 			},
-
 		},
 		{
 			key: '(',
