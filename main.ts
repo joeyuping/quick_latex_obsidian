@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, in:\\infty, "+
+	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, "+
 							"cd:\\cdot, qu:\\quad, ti:\\times, "+
 							"al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
@@ -377,6 +377,84 @@ export default class QuickLatexPlugin extends Plugin {
 				return false
 			},
 
+		},
+		{
+			key: '}',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseRound_toggle) {
+						const position = editor.getCursor();
+						const end = editor.getLine(position.line).length
+						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
+						if (!this.unclosed_bracket(editor, "{", "}", end, 0)[0] &&
+						 !this.unclosed_bracket(editor, "{", "}", end, 0, false)[0] &&
+						 next_sym == "}") {
+							editor.setCursor({line:position.line,ch:position.ch+1})
+							return true;
+						} else {
+							return false;
+						};
+					};
+				};
+				return false
+			},
+		},
+		{
+			key: ']',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseRound_toggle) {
+						const position = editor.getCursor();
+						const end = editor.getLine(position.line).length
+						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
+						if (!this.unclosed_bracket(editor, "[", "]", end, 0)[0] &&
+						 !this.unclosed_bracket(editor, "[", "]", end, 0, false)[0] &&
+						 next_sym == "]") {
+							editor.setCursor({line:position.line,ch:position.ch+1})
+							return true;
+						} else {
+							return false;
+						};
+					};
+				};
+				return false
+			},
+		},
+		{
+			key: ')',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (this.withinMath(editor)) {
+					if (this.settings.autoCloseRound_toggle) {
+						const position = editor.getCursor();
+						const end = editor.getLine(position.line).length
+						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
+						if (!this.unclosed_bracket(editor, "(", ")", end, 0)[0] &&
+						 !this.unclosed_bracket(editor, "(", ")", end, 0, false)[0] &&
+						 next_sym == ")") {
+							editor.setCursor({line:position.line,ch:position.ch+1})
+							return true;
+						} else {
+							return false;
+						};
+					};
+				};
+				return false
+			},
 		},
 		{
 			key: 'm',

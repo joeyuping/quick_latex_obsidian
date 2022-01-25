@@ -99,7 +99,7 @@ e.g. al:\\alpha, be:\\beta
 |Shorthand|String|Shorthand|String|Shorthand|String|
 |:-------:|:----:|:-------:|:----:|:-------:|:----:|
 |sq|\\sqrt{}|bb|\\mathbb{}|bf|\\mathbf{}|
-|te|\\text{}|in|\\infty
+|te|\\text{}|
 |cd|\\cdot|qu|\\quad|ti|\\times|
 |al|\\alpha|be|\\beta|ga|\\gamma|
 |Ga|\\Gamma|de|\\delta|De|\\Delta|
