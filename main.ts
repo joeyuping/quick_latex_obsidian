@@ -91,6 +91,26 @@ export default class QuickLatexPlugin extends Plugin {
 					}
 					return false
 				} else {
+					// close math symbol
+					const position = editor.getCursor()
+					const prev_char = editor.getRange(
+						{line:position.line,ch:position.ch-1},
+						{line:position.line,ch:position.ch})
+					const next_char = editor.getRange(
+						{line:position.line,ch:position.ch},
+						{line:position.line,ch:position.ch+1})
+					const next2_char = editor.getRange(
+						{line:position.line,ch:position.ch},
+						{line:position.line,ch:position.ch+2})
+					if (prev_char != "$" && next_char == "$"){
+						if (next2_char == "$$") {
+							editor.setCursor({line:position.line,ch:position.ch+2})
+							return true
+						} else {
+							editor.setCursor({line:position.line,ch:position.ch+1})
+							return true
+						}
+					}
 					// auto close math
 					if (this.settings.autoCloseMath_toggle && this.vimAllow_autoCloseMath) {
 						editor.replaceSelection("$");
@@ -162,32 +182,36 @@ export default class QuickLatexPlugin extends Plugin {
 					// check for custom shorthand
 					if (this.settings.customShorthand_toggle) {
 						let keyword:string = "";
-						if (position.ch==2) {
-							keyword = "@" + editor.getRange(
-								{ line: position.line, ch: position.ch - 2 },
-								{ line: position.line, ch: position.ch });
-						} else {
-							keyword = editor.getRange(
-								{ line: position.line, ch: position.ch - 3 },
-								{ line: position.line, ch: position.ch });
-						}
-						if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
-							keyword[0] == "@" ) {
-							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
-								if (this.shorthand_array[i][0] == keyword.slice(-2) && 
+						let keyword_length:number = 0;
+						for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+							keyword_length = this.shorthand_array[i][0].length;
+							if ( keyword_length > position.ch) {
+								continue;
+							} else if ( keyword_length == position.ch ) {
+								keyword = "@" + editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length },
+									{ line: position.line, ch: position.ch });
+							} else {
+								keyword = editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length - 1 },
+									{ line: position.line, ch: position.ch });
+							}
+							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+								keyword[0] == "@" ) {
+								if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
 									this.shorthand_array[i][1] != keyword) {
 									const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
 									if (this.shorthand_array[i][1].slice(-2) == "{}") {
 										editor.replaceRange(this.shorthand_array[i][1],
-											{ line: position.line, ch: position.ch - 2 - replace_slash },
+											{ line: position.line, ch: position.ch - keyword_length - replace_slash },
 											{ line: position.line, ch: position.ch });
 										editor.setCursor(
 											{ line: position.line, 
-											ch: position.ch + this.shorthand_array[i][1].length - 3 - replace_slash}
+											ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
 											);
 									} else {
 										editor.replaceRange(this.shorthand_array[i][1],
-											{ line: position.line, ch: position.ch - 2 - replace_slash },
+											{ line: position.line, ch: position.ch - keyword_length - replace_slash },
 											{ line: position.line, ch: position.ch });
 									}									
 									return true;
@@ -285,6 +309,21 @@ export default class QuickLatexPlugin extends Plugin {
 						editor.replaceSelection('\\\\\n&')
 						return true;
 					}
+				}
+				// double enter for $$
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const prev2_Char = editor.getRange(
+						{ line: position.line, ch: position.ch - 2 },
+						{ line: position.line, ch: position.ch })
+					const next2_Char = editor.getRange(
+						{ line: position.line, ch: position.ch },
+						{ line: position.line, ch: position.ch + 2 })
+					if (prev2_Char=="$$"&&next2_Char=="$$") {
+						editor.replaceSelection('\n')
+						editor.setCursor(position)
+						return false
+					}							
 				}
 				return false
 			},
@@ -564,6 +603,29 @@ export default class QuickLatexPlugin extends Plugin {
 							return;
 						} 
 					} else {
+						// close math symbol
+						const position = editor.getCursor()
+						const prev_char = editor.getRange(
+							{line:position.line,ch:position.ch-1},
+							{line:position.line,ch:position.ch})
+						const next_char = editor.getRange(
+							{line:position.line,ch:position.ch},
+							{line:position.line,ch:position.ch+1})
+						const next2_char = editor.getRange(
+							{line:position.line,ch:position.ch},
+							{line:position.line,ch:position.ch+2})
+						if (prev_char != "$" && next_char == "$"){
+							if (next2_char == "$$") {
+								editor.setCursor({line:position.line,ch:position.ch+2})
+								event.preventDefault();
+								return;
+							} else {
+								editor.setCursor({line:position.line,ch:position.ch+1})
+								event.preventDefault();
+								return;
+							}
+						}
+
 						// perform autoCloseMath
 						if (this.settings.autoCloseMath_toggle && this.vimAllow_autoCloseMath) {
 							editor.replaceSelection("$");
@@ -607,36 +669,39 @@ export default class QuickLatexPlugin extends Plugin {
 						// check for custom shorthand
 						if (this.settings.customShorthand_toggle) {
 							let keyword:string = "";
-							if (position.ch==2) {
-								keyword = "@" + editor.getRange(
-									{ line: position.line, ch: position.ch - 2 },
-									{ line: position.line, ch: position.ch });
-							} else {
-								keyword = editor.getRange(
-									{ line: position.line, ch: position.ch - 3 },
-									{ line: position.line, ch: position.ch });
-							}
-							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
-								keyword[0] == "@" ) {
-								for (let i = 0 ; i < this.shorthand_array.length ; i++) {
-									if (this.shorthand_array[i][0] == keyword.slice(-2) && 
+							let keyword_length:number = 0;
+							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+								keyword_length = this.shorthand_array[i][0].length;
+								if ( keyword_length > position.ch) {
+									continue;
+								} else if ( keyword_length == position.ch ) {
+									keyword = "@" + editor.getRange(
+										{ line: position.line, ch: position.ch - keyword_length },
+										{ line: position.line, ch: position.ch });
+								} else {
+									keyword = editor.getRange(
+										{ line: position.line, ch: position.ch - keyword_length - 1 },
+										{ line: position.line, ch: position.ch });
+								}
+								if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+									keyword[0] == "@" ) {
+									if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
 										this.shorthand_array[i][1] != keyword) {
 										const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
 										if (this.shorthand_array[i][1].slice(-2) == "{}") {
 											editor.replaceRange(this.shorthand_array[i][1],
-												{ line: position.line, ch: position.ch - 2 - replace_slash },
+												{ line: position.line, ch: position.ch - keyword_length - replace_slash },
 												{ line: position.line, ch: position.ch });
 											editor.setCursor(
 												{ line: position.line, 
-												ch: position.ch + this.shorthand_array[i][1].length - 3 - replace_slash}
+												ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
 												);
-											event.preventDefault();
 										} else {
 											editor.replaceRange(this.shorthand_array[i][1],
-												{ line: position.line, ch: position.ch - 2 - replace_slash },
+												{ line: position.line, ch: position.ch - keyword_length - replace_slash },
 												{ line: position.line, ch: position.ch });
-											event.preventDefault();
 										}									
+										event.preventDefault();
 										return;
 									};
 								};
@@ -741,6 +806,22 @@ export default class QuickLatexPlugin extends Plugin {
 							return;
 						};
 					}
+
+					// double enter for $$
+					if (this.withinMath(editor)) {
+						const position = editor.getCursor();
+						const prev2_Char = editor.getRange(
+							{ line: position.line, ch: position.ch - 2 },
+							{ line: position.line, ch: position.ch })
+						const next2_Char = editor.getRange(
+							{ line: position.line, ch: position.ch },
+							{ line: position.line, ch: position.ch + 2 })
+						if (prev2_Char=="$$"&&next2_Char=="$$") {
+							editor.replaceSelection('\n')
+							editor.setCursor(position)
+						}							
+					}
+
 					return;
 
 				case 'Tab':
