@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, inf:\\infty "+
+	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, inf:\\infty, "+
 							"cd:\\cdot, qu:\\quad, ti:\\times, "+
 							"al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
