@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, "+
+	customShorthand_parameter: "sq:\\sqrt{}, bb:\\mathbb{}, bf:\\mathbf{}, te:\\text{}, inf:\\infty "+
 							"cd:\\cdot, qu:\\quad, ti:\\times, "+
 							"al:\\alpha, be:\\beta, ga:\\gamma, Ga:\\Gamma, "+
 							"de:\\delta, De:\\Delta, ep:\\epsilon, ze:\\zeta, "+
@@ -1592,7 +1592,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Custom Shorthand')
-			.setDesc('Use two-letters custom shorthand for common latex strings. '+
+			.setDesc('Use custom shorthand (can be multiple letters) for common latex strings. '+
 			'Eg, typing "al" followed by "space" key will replace with "\\alpha"')
 			.addToggle((toggle) => toggle
 				.setValue(this.plugin.settings.customShorthand_toggle)
@@ -1604,7 +1604,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Custom Shorthand Parameter')
-			.setDesc('Separate the two-letters shorthand and the string with ":" ;'+
+			.setDesc('Separate the multi-letters shorthand and the string with ":" ;'+
 			'Separate each set of shorthands with ","; '+
 			'For Expression that ends with "{}", cursor will automatically be placed within the bracket.')
 			.addText((text) => text

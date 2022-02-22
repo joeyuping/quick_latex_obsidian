@@ -1,6 +1,7 @@
 # Quick Latex for Obsidian
 
 **【Now works with the new Obsidian preview mode!!】**
+**【Custom shorthand NOT limited to 2-letters anymore～～ try multi-letters shorthand. e.g.  inf -> \infty】**
 
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
@@ -88,8 +89,8 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_matrixblock.gif)
 
-### 10. Custom shorthand
-* Use two-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
+### 10. Custom shorthand (Now works with multi-letters shorthand!)
+* Use multi-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
 * You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
 e.g. al:\\alpha, be:\\beta
 * **Tip:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
