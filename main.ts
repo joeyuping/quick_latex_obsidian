@@ -269,11 +269,12 @@ export default class QuickLatexPlugin extends Plugin {
 				
 					// retrieve the last unbracketed superscript
 					let last_superscript = current_line.lastIndexOf('^', position.ch);
+					
 					while (last_superscript != -1) {
 						const two_letters_after_superscript = editor.getRange(
 							{ line: position.line, ch: last_superscript + 1 },
 							{ line: position.line, ch: last_superscript + 3 });
-						if (two_letters_after_superscript.slice(0) == '{' || two_letters_after_superscript == ' {') {
+						if (two_letters_after_superscript[0] == '{' || two_letters_after_superscript == ' {') {
 							last_superscript = current_line.lastIndexOf('^', last_superscript - 1);
 						} else if (last_superscript < last_math) {
 							last_superscript = -1
