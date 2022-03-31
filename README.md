@@ -1,7 +1,6 @@
 # Quick Latex for Obsidian
 
-**【Now works with the new Obsidian preview mode!!】**
-**【Custom shorthand NOT limited to 2-letters anymore～～ try multi-letters shorthand. e.g.  inf -> \infty】**
+**【Custom shorthands enhanced!! see below】**
 
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
@@ -89,18 +88,22 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_matrixblock.gif)
 
-### 10. Custom shorthand (Now works with multi-letters shorthand!)
-* Use multi-letters custom shorthand for common latex strings. e.g. typing "al" followed by "space" key will replace with "\\alpha"
-* You may set your own custom shorthand in the plugin settings page. Separate the two-letters shorthand and the string with ":" and separate each set of shorthands with ",".
-e.g. al:\\alpha, be:\\beta
-* **Tip:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
+### 【Enhanced!】10. Custom shorthand
+* Use multi-letters custom shorthand for common latex snippets. e.g. typing "al" followed by "space" key will replace with "\\alpha"
+* You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":"  ;  end each set of snippets with ";" and a newline.
+e.g.
+al:\\alpha;
+bi:\\binom{#cursor}{#tab};
+* **Tip1:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
+* **Tip2:** Use "#cursor" within snippet to set the cursor position after replacement
+* **Tip3:** Use "#tab" within snippet for cases of multiple parameters. e.g. bi:\\binom{#cursor}{#tab},  after keying bi and spacebar, the shorthand will expand into \\binom{|}{#tab} with cursor in the first brackets. After keying the values in first brackets, press tab to jump to the #tab location to continue typing.
 * **Note:** The system will ignore a shorthand if it is preceeded by an alphabet. eg. "ta" is the shorthand for "\tau. Typing "del**ta**" followed by space will **NOT** trigger the replacement.
 * Below is the list of default shorthand:
 
 |Shorthand|String|Shorthand|String|Shorthand|String|
 |:-------:|:----:|:-------:|:----:|:-------:|:----:|
 |sq|\\sqrt{}|bb|\\mathbb{}|bf|\\mathbf{}|
-|te|\\text{}|inf|\\infty|
+|te|\\text{}|inf|\\infty|bi|\\binom{#cursor}{#tab}
 |cd|\\cdot|qu|\\quad|ti|\\times|
 |al|\\alpha|be|\\beta|ga|\\gamma|
 |Ga|\\Gamma|de|\\delta|De|\\Delta|
