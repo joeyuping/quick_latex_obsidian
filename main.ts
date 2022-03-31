@@ -55,7 +55,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 							"de:\\delta;\nDe:\\Delta;\nep:\\epsilon;\nze:\\zeta;\n"+
 							"et:\\eta;\nth:\\theta;\nTh:\\Theta;\nio:\\iota;\n"+
 							"ka:\\kappa;\nla:\\lambda;\nLa:\\Lambda;\nmu:\\mu;\n"+
-							"nu:\;\nu;\nxi:\\xi;\nXi:\\Xi;\npi:\\pi;\nPi:\\Pi;\n"+
+							"nu:\\nu;\nxi:\\xi;\nXi:\\Xi;\npi:\\pi;\nPi:\\Pi;\n"+
 							"rh:\\rho;\nsi:\\sigma;\nSi:\\Sigma;\nta:\\tau;\n"+
 							"up:\\upsilon;\nUp:\\Upsilon;\nph:\\phi;\nPh:\\Phi;\nch:\\chi;\n"+
 							"ps:\\psi;\nPs:\\Psi;\nom:\\omega;\nOm:\\Omega"
@@ -736,7 +736,7 @@ export default class QuickLatexPlugin extends Plugin {
 						const last_dollar = current_line.lastIndexOf('$', position.ch - 1);
 
 						// check for custom shorthand
-						if (this.settings.customShorthand_toggle && this.withinText(editor, position.ch)) {
+						if (this.settings.customShorthand_toggle && !this.withinText(editor, position.ch)) {
 							let keyword:string = "";
 							let keyword_length:number = 0;
 							for (let i = 0 ; i < this.shorthand_array.length ; i++) {
@@ -757,19 +757,37 @@ export default class QuickLatexPlugin extends Plugin {
 									if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
 										this.shorthand_array[i][1] != keyword) {
 										const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
-										if (this.shorthand_array[i][1].slice(-2) == "{}") {
-											editor.replaceRange(this.shorthand_array[i][1],
-												{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-												{ line: position.line, ch: position.ch });
+										const set_cursor_position = this.shorthand_array[i][1].indexOf("#cursor");
+										editor.replaceRange(this.shorthand_array[i][1],
+											{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+											{ line: position.line, ch: position.ch });
+										if (set_cursor_position != -1) {
+											editor.replaceRange("",
+											{line:position.line, ch:position.ch - keyword_length + set_cursor_position},
+											{line:position.line, ch:position.ch - keyword_length + set_cursor_position+7});
+											editor.setCursor({line:position.line, ch:position.ch - keyword_length + set_cursor_position})
+										} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
 											editor.setCursor(
 												{ line: position.line, 
 												ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
 												);
 										} else {
-											editor.replaceRange(this.shorthand_array[i][1],
-												{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-												{ line: position.line, ch: position.ch });
-										}									
+											
+										}			
+										
+										// if (this.shorthand_array[i][1].slice(-2) == "{}") {
+										// 	editor.replaceRange(this.shorthand_array[i][1],
+										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+										// 		{ line: position.line, ch: position.ch });
+										// 	editor.setCursor(
+										// 		{ line: position.line, 
+										// 		ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
+										// 		);
+										// } else {
+										// 	editor.replaceRange(this.shorthand_array[i][1],
+										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+										// 		{ line: position.line, ch: position.ch });
+										// }									
 										event.preventDefault();
 										return;
 									};
@@ -1718,14 +1736,14 @@ class QuickLatexSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('【updated!】Custom Shorthand Parameter')
-			.setDesc('Separate the multi-letters shorthand and the snippet with ":" ; '+
-			'End each set of shorthands with ";" and a newline; '+
-			'For Expression that ends with "{}", cursor will automatically be placed within the bracket. '+
-			'Or you can type "#cursor" within the snippet to set the cursor location after replacement. '+
-			'You can also include "#tab" within the snippet for use case such as multiple {} (e.g. \\binom{#cursor}{#tab}) '+
-			'Pressing tab in such case will jump the cursor to the next "#tab" keyword'+
-			'Now supports multipline snippets too! '+
-			'(try uninstall then reinstalling the plugin to see the new set of shorthands)')
+			.setDesc('Separate the multi-letters shorthand and the snippet with ":" and '+
+			'end each set of shorthand snippet pair by ";" and a newline. '+
+			'For expressions that end with "{}", the cursor will automatically be placed within the bracket. '+
+			'Alternatively, you can type "#cursor" within the snippet to set the cursor location after replacement. '+
+			'You can also include "#tab" within the snippet for use cases such as multiple {}s (e.g. \\binom{#cursor}{#tab}). '+
+			'Pressing tab key in such cases will jump the cursor to the next "#tab" keyword.'+
+			'Shorthands now support multiline snippets too! '+
+			'(try uninstall then reinstalling the plugin to see the new set of shorthands.)')
 			.setClass("text-snippets-class")
 			.addTextArea((text) => text
 				.setValue(this.plugin.settings.customShorthand_parameter)
