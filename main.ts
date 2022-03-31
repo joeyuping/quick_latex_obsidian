@@ -574,7 +574,18 @@ export default class QuickLatexPlugin extends Plugin {
 		await this.loadSettings();
 
 		// preprocess shorthand array
-		this.shorthand_array = this.settings.customShorthand_parameter.split(",").map(item=>item.split(":").map(s=>s.trim()));
+		let shorthands = this.settings.customShorthand_parameter
+		while(shorthands.slice(-1)=="\n"){
+			shorthands = shorthands.slice(0,-1)
+		}
+		if(shorthands.slice(-1)==";"){
+			shorthands = shorthands.slice(0,-1)
+		}
+		if(shorthands.lastIndexOf(";\n")==-1){
+			this.shorthand_array = shorthands.split(",").map(item=>item.split(":").map(item=>item.trim()));
+		} else {
+			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":"));
+		}
 		
 		this.app.workspace.onLayoutReady(() => {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
