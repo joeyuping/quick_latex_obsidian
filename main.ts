@@ -773,21 +773,7 @@ export default class QuickLatexPlugin extends Plugin {
 												);
 										} else {
 											
-										}			
-										
-										// if (this.shorthand_array[i][1].slice(-2) == "{}") {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// 	editor.setCursor(
-										// 		{ line: position.line, 
-										// 		ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
-										// 		);
-										// } else {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// }									
+										}											
 										event.preventDefault();
 										return;
 									};
@@ -820,7 +806,7 @@ export default class QuickLatexPlugin extends Plugin {
 							const two_letters_after_superscript = editor.getRange(
 								{ line: position.line, ch: last_superscript + 1 },
 								{ line: position.line, ch: last_superscript + 3 });
-							if (two_letters_after_superscript.slice(0) == '{' || two_letters_after_superscript == ' {') {
+							if (two_letters_after_superscript[0] == '{' || two_letters_after_superscript == ' {') {
 								last_superscript = current_line.lastIndexOf('^', last_superscript - 1);
 							} else if (last_superscript < last_math) {
 								last_superscript = -1
@@ -898,6 +884,19 @@ export default class QuickLatexPlugin extends Plugin {
 						};
 					}
 
+					// enter for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(
+							editor,
+							'\\begin{cases}',
+							'\\end{cases}'
+						)) {
+							editor.replaceSelection(' \\\\\n')
+							event.preventDefault();
+							return;
+						}
+					}
+
 					// double enter for $$
 					if (this.withinMath(editor)) {
 						const position = editor.getCursor();
@@ -925,7 +924,33 @@ export default class QuickLatexPlugin extends Plugin {
 						)) {
 							editor.replaceSelection(' & ')
 							event.preventDefault();
+							return;
 						};
+						
+					};
+					
+					// Tab shortcut for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+						)) {
+							editor.replaceSelection(' & ')
+							event.preventDefault();
+							return;
+						};
+					};
+
+					// Tab to go to next #tab
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const tab_position = current_line.indexOf("#tab");
+					if (tab_position!=-1){
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+4})
+						editor.setCursor({line:position.line, ch:tab_position})
+						event.preventDefault();
 						return;
 					};
 			};
