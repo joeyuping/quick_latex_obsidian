@@ -150,13 +150,19 @@ export default class QuickLatexPlugin extends Plugin {
 
 				// Tab shortcut for matrix block
 				if (this.settings.addMatrixBlock_toggle) {
-					if (this.withinAnyBrackets_document(editor,
-					'\\begin{' + this.settings.addMatrixBlock_parameter,
-					'\\end{' + this.settings.addMatrixBlock_parameter,
-					)) {
+					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+					let state = false
+					for (let i = 0; i < begin_matrix.length; i++) {
+						if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+								state = true
+								break;
+							};
+					}
+					if (state) {
 						editor.replaceSelection(' & ')
 						return true
-					};
+					}
 				}
 
 				// Tab shortcut for cases block
@@ -170,7 +176,6 @@ export default class QuickLatexPlugin extends Plugin {
 					};
 				}
 				
-
 				// Tab to go to next #tab
 				const position = editor.getCursor();
 				const current_line = editor.getLine(position.line);
@@ -354,13 +359,18 @@ export default class QuickLatexPlugin extends Plugin {
 				}
 
 				if (this.settings.addMatrixBlock_toggle) {
-					if (this.withinAnyBrackets_document(
-						editor,
-						'\\begin{' + this.settings.addMatrixBlock_parameter,
-						'\\end{' + this.settings.addMatrixBlock_parameter
-					)) {
+					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+					let state = false
+					for (let i = 0; i < begin_matrix.length; i++) {
+						if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+								state = true
+								break;
+							};
+					}
+					if (state) {
 						editor.replaceSelection(' \\\\ ')
-						return true;
+						return true
 					}
 				}
 
@@ -892,16 +902,21 @@ export default class QuickLatexPlugin extends Plugin {
 				case 'Enter':
 					// perform Enter shortcut within matrix block
 					if (this.settings.addMatrixBlock_toggle) {
-						if (this.withinAnyBrackets_document(
-							editor,
-							'\\begin{' + this.settings.addMatrixBlock_parameter,
-							'\\end{' + this.settings.addMatrixBlock_parameter
-						)) {
-							if (!event.shiftKey) {
+						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+						const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+						let state = false
+						for (let i = 0; i < begin_matrix.length; i++) {
+							if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+									state = true
+									break;
+								};
+						}
+						if (!event.shiftKey) {
+							if (state) {
 								editor.replaceSelection(' \\\\ ')
 								event.preventDefault();
-							};
-							return;
+								return
+							}
 						}
 					}
 
@@ -953,16 +968,20 @@ export default class QuickLatexPlugin extends Plugin {
 				case 'Tab':
 					// perform Tab shortcut within matrix block
 					if (this.settings.addMatrixBlock_toggle) {
-						if (this.withinAnyBrackets_document(
-							editor,
-							'\\begin{' + this.settings.addMatrixBlock_parameter,
-							'\\end{' + this.settings.addMatrixBlock_parameter
-						)) {
+						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+						const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+						let state = false
+						for (let i = 0; i < begin_matrix.length; i++) {
+							if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+									state = true
+									break;
+								};
+						}
+						if (state) {
 							editor.replaceSelection(' & ')
 							event.preventDefault();
 							return;
-						};
-						
+						}
 					};
 					
 					// Tab shortcut for cases block
