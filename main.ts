@@ -190,7 +190,7 @@ export default class QuickLatexPlugin extends Plugin {
 			run: (): boolean => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
 				if (!view) return false
-				
+
 				const editor  = view.editor
 
 				if (!this.settings.autoFraction_toggle &&
@@ -285,12 +285,30 @@ export default class QuickLatexPlugin extends Plugin {
 					}
 
 					// retrieve the last divide symbol
-					let last_divide = current_line.lastIndexOf('/', position.ch - 1);
+					let last_divide = current_line.lastIndexOf('/', position.ch - 2);
 
+					while (last_divide != -1) {
+						const around_divide = editor.getRange(
+							{ line: position.line, ch: last_divide - 1 },
+							{ line: position.line, ch: last_divide + 2 });
+						if (around_divide[0] == ' ' && around_divide[2] == ' ') {
+							last_divide = current_line.lastIndexOf('^', last_divide - 1);
+						} else if (last_divide < last_math) {
+							last_divide = -1
+							break;
+						} else {
+							break;
+						}
+					}
+ 
 					// perform autoEncloseSup
 					if (this.settings.autoEncloseSup_toggle) {
 						if (last_superscript > last_divide) {
-							return this.autoEncloseSup(editor, event, last_superscript);
+							// if any brackets from last sup to cursor still unclosed, dont do autoEncloseSup yet
+							const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+							if (!brackets.some(e => this.unclosed_bracket(editor, e[0], e[1], position.ch, last_superscript)[0])) {
+								return this.autoEncloseSup(editor, event, last_superscript);
+							}
 						};
 					};
 
@@ -773,21 +791,7 @@ export default class QuickLatexPlugin extends Plugin {
 												);
 										} else {
 											
-										}			
-										
-										// if (this.shorthand_array[i][1].slice(-2) == "{}") {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// 	editor.setCursor(
-										// 		{ line: position.line, 
-										// 		ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
-										// 		);
-										// } else {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// }									
+										}											
 										event.preventDefault();
 										return;
 									};
@@ -820,7 +824,7 @@ export default class QuickLatexPlugin extends Plugin {
 							const two_letters_after_superscript = editor.getRange(
 								{ line: position.line, ch: last_superscript + 1 },
 								{ line: position.line, ch: last_superscript + 3 });
-							if (two_letters_after_superscript.slice(0) == '{' || two_letters_after_superscript == ' {') {
+							if (two_letters_after_superscript[0] == '{' || two_letters_after_superscript == ' {') {
 								last_superscript = current_line.lastIndexOf('^', last_superscript - 1);
 							} else if (last_superscript < last_math) {
 								last_superscript = -1
@@ -831,13 +835,31 @@ export default class QuickLatexPlugin extends Plugin {
 						}
 
 						// retrieve the last divide symbol
-						let last_divide = current_line.lastIndexOf('/', position.ch - 1);
+						let last_divide = current_line.lastIndexOf('/', position.ch - 2);
+
+						while (last_divide != -1) {
+							const around_divide = editor.getRange(
+								{ line: position.line, ch: last_divide - 1 },
+								{ line: position.line, ch: last_divide + 2 });
+							if (around_divide[0] == ' ' && around_divide[2] == ' ') {
+								last_divide = current_line.lastIndexOf('^', last_divide - 1);
+							} else if (last_divide < last_math) {
+								last_divide = -1
+								break;
+							} else {
+								break;
+							}
+						}
 
 						// perform autoEncloseSup
 						if (this.settings.autoEncloseSup_toggle) {
 							if (last_superscript > last_divide) {
-								this.autoEncloseSup(editor, event, last_superscript);
-								return;
+								// if any brackets from last sup to cursor still unclosed, dont do autoEncloseSup yet
+								const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+								if (!brackets.some(e => this.unclosed_bracket(editor, e[0], e[1], position.ch, last_superscript)[0])) {
+									this.autoEncloseSup(editor, event, last_superscript);
+									return;
+								}
 							};
 						};
 
@@ -898,6 +920,19 @@ export default class QuickLatexPlugin extends Plugin {
 						};
 					}
 
+					// enter for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(
+							editor,
+							'\\begin{cases}',
+							'\\end{cases}'
+						)) {
+							editor.replaceSelection(' \\\\\n')
+							event.preventDefault();
+							return;
+						}
+					}
+
 					// double enter for $$
 					if (this.withinMath(editor)) {
 						const position = editor.getCursor();
@@ -925,7 +960,33 @@ export default class QuickLatexPlugin extends Plugin {
 						)) {
 							editor.replaceSelection(' & ')
 							event.preventDefault();
+							return;
 						};
+						
+					};
+					
+					// Tab shortcut for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+						)) {
+							editor.replaceSelection(' & ')
+							event.preventDefault();
+							return;
+						};
+					};
+
+					// Tab to go to next #tab
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const tab_position = current_line.indexOf("#tab");
+					if (tab_position!=-1){
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+4})
+						editor.setCursor({line:position.line, ch:tab_position})
+						event.preventDefault();
 						return;
 					};
 			};
