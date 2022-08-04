@@ -298,9 +298,9 @@ export default class QuickLatexPlugin extends Plugin {
 										{ line: position.line, ch: position.ch });
 									if (set_cursor_position != -1) {
 										editor.replaceRange("",
-										{line:position.line, ch:position.ch - keyword_length + set_cursor_position},
-										{line:position.line, ch:position.ch - keyword_length + set_cursor_position+7});
-										editor.setCursor({line:position.line, ch:position.ch - keyword_length + set_cursor_position})
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+										editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
 									} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
 										editor.setCursor(
 											{ line: position.line, 
@@ -852,9 +852,9 @@ export default class QuickLatexPlugin extends Plugin {
 											{ line: position.line, ch: position.ch });
 										if (set_cursor_position != -1) {
 											editor.replaceRange("",
-											{line:position.line, ch:position.ch - keyword_length + set_cursor_position},
-											{line:position.line, ch:position.ch - keyword_length + set_cursor_position+7});
-											editor.setCursor({line:position.line, ch:position.ch - keyword_length + set_cursor_position})
+											{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+											{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+											editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
 										} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
 											editor.setCursor(
 												{ line: position.line, 
