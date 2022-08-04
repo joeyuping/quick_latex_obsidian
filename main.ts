@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 							"up:\\upsilon;\nUp:\\Upsilon;\nph:\\phi;\nPh:\\Phi;\nch:\\chi;\n"+
 							"ps:\\psi;\nPs:\\Psi;\nom:\\omega;\nOm:\\Omega"
 }
-
+ 
 export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
 	shorthand_array: string[][];
