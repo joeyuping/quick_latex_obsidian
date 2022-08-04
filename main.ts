@@ -177,15 +177,76 @@ export default class QuickLatexPlugin extends Plugin {
 				}
 				
 				// Tab to go to next #tab
-				const position = editor.getCursor();
-				const current_line = editor.getLine(position.line);
-				const tab_position = current_line.indexOf("#tab");
-				if (tab_position!=-1){
-					editor.replaceRange("",
-					{line:position.line, ch:tab_position},
-					{line:position.line, ch:tab_position+4})
-					editor.setCursor({line:position.line, ch:tab_position})
-					return true
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const tab_position = current_line.indexOf("#tab", position.ch);
+					if (tab_position!=-1){
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+4})
+						editor.setCursor({line:position.line, ch:tab_position})
+						return true
+					}
+				}
+
+				// Tab out of $
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
+					if (next_2 == "$$") {
+						editor.setCursor({line:position.line, ch:position.ch+2})
+						return true
+					} else if (next_2[0] == "$") {
+						editor.setCursor({line:position.line, ch:position.ch+1})
+						return true
+					}
+				}
+
+				// Tab to next close bracket
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const following_text = editor.getRange({line:position.line, ch:position.ch+1},{line:position.line, ch:current_line.length})
+					const close_symbols = ['}', ']', ')', '$'] 
+					for (let i = 0; i < following_text.length; i++) {
+						if (close_symbols.contains(following_text[i])) {
+							editor.setCursor({line:position.line, ch:position.ch+i+1})
+							return true
+						}					
+					}
+				}
+				return false
+			},
+		},
+		{
+			key: 'Shift-Tab',
+			run: (): boolean => {
+				
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const preceding_text = editor.getRange({line:position.line, ch:0},{line:position.line, ch:position.ch})
+					const close_symbols = ['}', ']', ')'] 
+					for (let i = preceding_text.length; i >= 0; i--) {
+						if (close_symbols.contains(preceding_text[i])) {
+							editor.setCursor({line:position.line, ch:i})
+							return true
+						} else if (position.ch-i > 1 && preceding_text[i]=="$") {
+							editor.setCursor({line:position.line, ch:i+1})
+							return true
+						} else if (preceding_text.slice(-2)=="$$") {
+							editor.setCursor({line:position.line, ch:position.ch-2})
+							return true
+						} else if (preceding_text[-1]=="$") {
+							editor.setCursor({line:position.line, ch:position.ch-1})
+							return true	
+						}			
+					}
 				}
 				return false
 			},
