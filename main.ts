@@ -1069,6 +1069,62 @@ export default class QuickLatexPlugin extends Plugin {
 						event.preventDefault();
 						return;
 					};
+
+					// Tab to next close bracket
+					if (this.withinMath(editor)) {
+						const position = editor.getCursor();
+						const current_line = editor.getLine(position.line);
+						
+						if (event.shiftKey) {
+							const close_symbols = ['}', ']', ')'] 
+							const preceding_text = editor.getRange({line:position.line, ch:0},{line:position.line, ch:position.ch})
+							for (let i = preceding_text.length; i >= 0; i--) {
+								if (close_symbols.contains(preceding_text[i])) {
+									editor.setCursor({line:position.line, ch:i})
+									event.preventDefault();
+									return
+								} else if (position.ch-i > 1 && preceding_text[i]=="$") {
+									editor.setCursor({line:position.line, ch:i+1})
+									event.preventDefault();
+									return
+								} else if (preceding_text.slice(-2)=="$$") {
+									editor.setCursor({line:position.line, ch:position.ch-2})
+									event.preventDefault();
+									return
+								} else if (preceding_text[-1]=="$") {
+									editor.setCursor({line:position.line, ch:position.ch-1})
+									event.preventDefault();
+									return
+								}			
+							}
+						} else {
+							const close_symbols = ['}', ']', ')', '$'] 
+							const following_text = editor.getRange({line:position.line, ch:position.ch+1},{line:position.line, ch:current_line.length})
+							for (let i = 0; i < following_text.length; i++) {
+								if (close_symbols.contains(following_text[i])) {
+									editor.setCursor({line:position.line, ch:position.ch+i+1})
+									event.preventDefault();
+									return
+								}					
+							}
+						}
+					}
+
+					// Tab out of $
+					if (this.withinMath(editor)) {
+						const position = editor.getCursor();
+						const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
+						if (next_2 == "$$") {
+							editor.setCursor({line:position.line, ch:position.ch+2})
+							event.preventDefault();
+							return
+						} else if (next_2[0] == "$") {
+							editor.setCursor({line:position.line, ch:position.ch+1})
+							event.preventDefault();
+							return
+						}
+					}
+				
 			};
 		};
 	};

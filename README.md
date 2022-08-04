@@ -88,7 +88,10 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_matrixblock.gif)
 
-### 【Enhanced!】10. Custom shorthand
+### 10. Tab & Shift-Tab to jump from brackets to brackets
+use Tab and Shift-Tab within math expressions to quickly jump from brackets to brackets. 
+
+### 【Enhanced!】11. Custom shorthand
 * Use multi-letters custom shorthand for common latex snippets. e.g. typing "al" followed by "space" key will replace with "\\alpha"
 * You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":"  ;  end each set of snippets with ";" and a newline.
 e.g.
