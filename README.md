@@ -129,7 +129,7 @@ bi:\\binom{#cursor}{#tab};
 * Compatible with builtin vim-mode.
 
 ---
-## source code:
+## Source Code:
 see https://github.com/joeyuping/quick_latex_obsidian
 
 ## Support
