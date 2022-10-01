@@ -135,5 +135,10 @@ bi:\\binom{#cursor}{#tab};
 * Compatible with builtin vim-mode.
 
 ---
-## source code:
+## Source Code:
 see https://github.com/joeyuping/quick_latex_obsidian
+
+## Support
+Really hope this plugin has been helpful!
+
+<a href='https://ko-fi.com/joeyuping' target='_blank'><img height='56' style='border:0px;height:56px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
