@@ -5,7 +5,7 @@
 * **new function**: when within align block, the plugin automatically add align symbol "&" before user-defined symbols (default: = > < \\le \\ge \\neq \\approx)
 e.g. x =(press "space" here), and "&" will be added before the = sign.
 * when at the end of the align, matrix or cases block, pressing "tab" once (for align) or twice (for matrix and cases block) will bring the cursor out of the block.
-* If next line is $$, press "tab" again will jump out of $$.
+* If next line is \$\$, press "tab" again will jump out of \$\$.
 
 
 ## Description:
