@@ -18,9 +18,11 @@ interface QuickLatexSettings {
 	autoCloseCurly_toggle: boolean;
 	addAlignBlock_toggle: boolean;
 	addAlignBlock_parameter: string;
+	autoAlignSymbols: string;
+	addCasesBlock_toggle: boolean;
+	shiftEnter_toggle: boolean;
 	addMatrixBlock_toggle: boolean;
 	addMatrixBlock_parameter: string;
-	addCasesBlock_toggle: boolean;
 	autoFraction_toggle: boolean;
 	autoLargeBracket_toggle: boolean;
 	autoSumLimit_toggle: boolean;
@@ -39,9 +41,11 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoCloseCurly_toggle: true,
 	addAlignBlock_toggle: true,
 	addAlignBlock_parameter: "align*",
+	autoAlignSymbols: "= > < \\le \\ge \\neq \\approx",
+	addCasesBlock_toggle: true,
+	shiftEnter_toggle: false,
 	addMatrixBlock_toggle: true,
 	addMatrixBlock_parameter: "pmatrix",
-	addCasesBlock_toggle: true,
 	autoFraction_toggle: true,
 	autoLargeBracket_toggle: true,
 	autoSumLimit_toggle: true,
@@ -64,6 +68,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
 	shorthand_array: string[][];
+	autoAlign_array: string[];
 
     private vimAllow_autoCloseMath: boolean = true;
 
@@ -150,18 +155,29 @@ export default class QuickLatexPlugin extends Plugin {
 
 				// Tab shortcut for matrix block
 				if (this.settings.addMatrixBlock_toggle) {
-					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
-					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter+'}', "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter+'}', "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
 					let state = false
+					let end_text = ""
 					for (let i = 0; i < begin_matrix.length; i++) {
 						if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
 								state = true
+								end_text = end_matrix[i]
 								break;
 							};
 					}
+					const position = editor.getCursor();
+					const prev3_char = editor.getRange({line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+					
 					if (state) {
-						editor.replaceSelection(' & ')
-						return true
+						if (prev3_char == ' & ') {
+							editor.replaceRange('', {line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+							editor.setCursor({line:position.line, ch:position.ch+end_text.length-3})
+							return true
+						} else {
+							editor.replaceSelection(' & ')
+							return true
+						}
 					}
 				}
 
@@ -171,8 +187,17 @@ export default class QuickLatexPlugin extends Plugin {
 					'\\begin{cases}',
 					'\\end{cases}'
 					)) {
-						editor.replaceSelection(' & ')
-						return true
+						const position = editor.getCursor();
+						const prev3_char = editor.getRange({line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+						const next_line = editor.getLine(position.line+1)
+						if (prev3_char == ' & ' && next_line == '\\end{cases}') {
+							editor.replaceRange('', {line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+							editor.setCursor({line:position.line+1, ch:next_line.length})
+							return true
+						} else {
+							editor.replaceSelection(' & ')
+							return true
+						}
 					};
 				}
 				
@@ -194,8 +219,13 @@ export default class QuickLatexPlugin extends Plugin {
 				if (this.withinMath(editor)) {
 					const position = editor.getCursor();
 					const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
+					const end_pos = editor.getLine(position.line).length;
+					const next_line = editor.getLine(position.line+1)
 					if (next_2 == "$$") {
 						editor.setCursor({line:position.line, ch:position.ch+2})
+						return true
+					} else if (position.ch == end_pos && next_line == "$$") {
+						editor.setCursor({line:position.line+1, ch:next_line.length})
 						return true
 					} else if (next_2[0] == "$") {
 						editor.setCursor({line:position.line, ch:position.ch+1})
@@ -216,6 +246,19 @@ export default class QuickLatexPlugin extends Plugin {
 						}					
 					}
 				}
+
+				// Tab out of align block
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const end_pos = editor.getLine(position.line).length;
+					const next_line = editor.getLine(position.line+1)
+					if (position.ch == end_pos && next_line == '\\end{' + this.settings.addAlignBlock_parameter+'}') {
+						editor.setCursor({line:position.line+1, ch:next_line.length})
+						return true
+					}
+				}
+
+
 				return false
 			},
 		},
@@ -398,6 +441,32 @@ export default class QuickLatexPlugin extends Plugin {
 							return this.autoLargeBracket(editor, event);
 						};
 					}
+
+					// perform autoAlign
+					if (this.autoAlign_array) {
+						if (this.withinAnyBrackets_document(
+							editor,
+							'\\begin{' + this.settings.addAlignBlock_parameter,
+							'\\end{' + this.settings.addAlignBlock_parameter)
+						) {
+							let keyword:string = "";
+							let keyword_length:number = 0;
+							for (let i = 0 ; i < this.autoAlign_array.length ; i++) {
+								keyword_length = this.autoAlign_array[i].length;
+								if ( keyword_length > position.ch) {
+									continue;
+								} else {
+									keyword = editor.getRange(
+										{ line: position.line, ch: position.ch - keyword_length },
+										{ line: position.line, ch: position.ch });
+								}
+								if (keyword == this.autoAlign_array[i]) {
+									editor.replaceRange('&', { line: position.line, ch: position.ch - keyword_length });
+									return false;
+								}
+							}
+						}
+					}
 				}
 			},
 
@@ -408,20 +477,31 @@ export default class QuickLatexPlugin extends Plugin {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
 				if (!view) return false
 				const editor  = view.editor
-				if (this.settings.addAlignBlock_toggle) {
+				if (this.settings.addAlignBlock_toggle && this.settings.shiftEnter_toggle==false) {
 					if (this.withinAnyBrackets_document(
 						editor,
 						'\\begin{' + this.settings.addAlignBlock_parameter,
 						'\\end{' + this.settings.addAlignBlock_parameter)
 					) {
-						editor.replaceSelection('\\\\\n&')
+						editor.replaceSelection('\\\\\n')
+						return true;
+					}
+				}
+
+				if (this.settings.addCasesBlock_toggle && this.settings.shiftEnter_toggle==false) {
+					if (this.withinAnyBrackets_document(
+						editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+					)) {
+						editor.replaceSelection(' \\\\\n')
 						return true;
 					}
 				}
 
 				if (this.settings.addMatrixBlock_toggle) {
-					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
-					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter+'}', "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter+'}', "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
 					let state = false
 					for (let i = 0; i < begin_matrix.length; i++) {
 						if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
@@ -435,16 +515,6 @@ export default class QuickLatexPlugin extends Plugin {
 					}
 				}
 
-				if (this.settings.addCasesBlock_toggle) {
-					if (this.withinAnyBrackets_document(
-						editor,
-						'\\begin{cases}',
-						'\\end{cases}'
-					)) {
-						editor.replaceSelection(' \\\\\n')
-						return true;
-					}
-				}
 				// double enter for $$
 				if (this.withinMath(editor)) {
 					const position = editor.getCursor();
@@ -462,6 +532,36 @@ export default class QuickLatexPlugin extends Plugin {
 				}
 				return false
 			},
+		},
+		{
+			key: 'Shift-Enter',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+				const editor  = view.editor
+				if (this.settings.addAlignBlock_toggle && this.settings.shiftEnter_toggle==true) {
+					if (this.withinAnyBrackets_document(
+						editor,
+						'\\begin{' + this.settings.addAlignBlock_parameter,
+						'\\end{' + this.settings.addAlignBlock_parameter)
+					) {
+						editor.replaceSelection('\\\\\n')
+						return true;
+					}
+				}
+
+				if (this.settings.addCasesBlock_toggle && this.settings.shiftEnter_toggle==true) {
+					if (this.withinAnyBrackets_document(
+						editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+					)) {
+						editor.replaceSelection(' \\\\\n')
+						return true;
+					}
+				}
+				return false;
+			}
 		},
 		{
 			key: '{',
@@ -677,6 +777,9 @@ export default class QuickLatexPlugin extends Plugin {
 			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":"));
 		}
 		
+		// preprocess autoAlign array
+		this.autoAlign_array = this.settings.autoAlignSymbols.split(" ");
+
 		this.app.workspace.onLayoutReady(() => {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
 				cm.on('vim-mode-change', this.handleVimModeChange);
@@ -1885,6 +1988,40 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('【NEW!】Auto-align at these symbols')
+			.setDesc('When within the align block, the align symbol "&" will be automatically added before these symbols. (separate by spaces)')
+			.addText((text) => text
+				.setValue(this.plugin.settings.autoAlignSymbols)
+				.onChange(async (value) => {
+					this.plugin.settings.autoAlignSymbols = value;
+					this.plugin.autoAlign_array = value.split(" ");
+					await this.plugin.saveData(this.plugin.settings);
+				}));
+
+		new Setting(containerEl)
+			.setName('Shortcut for Cases Block')
+			.setDesc('Use shortcut key to quickly insert \\begin{cases} \\end{cases} block. ' +
+				'Default: "Alt+Shift+C" (Mac: "Option+Shift+C")')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.addCasesBlock_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.addCasesBlock_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+			
+		new Setting(containerEl)
+			.setName('Use shift-enter for line break in align and cases block')
+			.setDesc('For align and cases block above, pressing enter automatically adds line break symbol "\\" or "&". Switch here to use shift-enter instead.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.shiftEnter_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.shiftEnter_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
 			.setName('Shortcut for Matrix Block')
 			.setDesc('Use shortcut key to quickly  insert \\begin{pmatrix} \\end{pmatrix} block. ' +
 				'Default: "Alt+Shift+M" (Mac: "Option+Shift+M")')
@@ -1908,18 +2045,6 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Shortcut for Cases Block')
-			.setDesc('Use shortcut key to quickly insert \\begin{cases} \\end{cases} block. ' +
-				'Default: "Alt+Shift+C" (Mac: "Option+Shift+C")')
-			.addToggle((toggle) => toggle
-				.setValue(this.plugin.settings.addCasesBlock_toggle)
-				.onChange(async (value) => {
-					this.plugin.settings.addCasesBlock_toggle = value;
-					await this.plugin.saveData(this.plugin.settings);
-					this.display();
-				}));
-
-		new Setting(containerEl)
 			.setName('Custom Shorthand')
 			.setDesc('Use custom shorthand (can be multiple letters) for common latex strings. '+
 			'Eg, typing "al" followed by "space" key will replace with "\\alpha"')
@@ -1932,7 +2057,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('【updated!】Custom Shorthand Parameter')
+			.setName('Custom Shorthand Parameter')
 			.setDesc('Separate the multi-letters shorthand and the snippet with ":" and '+
 			'end each set of shorthand snippet pair by ";" and a newline. '+
 			'For expressions that end with "{}", the cursor will automatically be placed within the bracket. '+

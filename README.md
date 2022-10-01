@@ -1,6 +1,12 @@
 # Quick Latex for Obsidian
 
-**【Custom shorthands enhanced!! see below】**
+**【NEW】 v 2.4.0**
+- user can now set whether to use enter or shift-enter within align and cases block to automatically add next line symbols \\. see settings page
+- **new function**: when within align block, the plugin automatically add align symbol "&" before user-defined symbols (default: = > < \\le \\ge \\neq \\approx)
+e.g. x =(press "space" here), and "&" will be added before the = sign.
+- when at the end of the align, matrix or cases block, pressing "tab" once (for align) or twice (for matrix and cases block) will bring the cursor out of the block.
+If next line is $$, press "tab" again will jump out of $$.
+
 
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
@@ -61,7 +67,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * **Tip 1:** If you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press "Alt+Shift+A" (Mac: "Option+Shift+A").
 
 * **Tip 2: Quick next line syntax within align block**
-    * pressing **"enter"** within an align block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
+    * pressing **"enter"** (can be changed to "shift-enter" in setting) within an align block will automatically insert **\\\\** to the end of the line and go to next line.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
 
 * **Tip 3: Changing parameter**
