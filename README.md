@@ -1,7 +1,7 @@
 # Quick Latex for Obsidian
 
 **【NEW】 v 2.4.0**
-* user can now set whether to use enter or shift-enter within align and cases block to automatically add next line symbols \\. see settings page
+* user can now set whether to use enter or shift-enter within align and cases block to automatically add next line symbols \\. (see settings page)  NOTE: the & symbol will no longer be automatically added after pressing enter, but an additional function for alignment is added (see next)
 * **new function**: when within align block, the plugin automatically add align symbol "&" before user-defined symbols (default: = > < \\le \\ge \\neq \\approx)
 e.g. x =(press "space" here), and "&" will be added before the = sign.
 * when at the end of the align, matrix or cases block, pressing "tab" once (for align) or twice (for matrix and cases block) will bring the cursor out of the block.
