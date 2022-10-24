@@ -1314,7 +1314,7 @@ export default class QuickLatexPlugin extends Plugin {
 			const letter_after_superscript = editor.getRange(
 				{ line: position.line, ch: last_superscript + 1 },
 				{ line: position.line, ch: last_superscript + 2 });
-			if (letter_after_superscript == '(' && letter_before_cursor == ')') {
+			if (letter_after_superscript == '(' && letter_before_cursor == ')' && position.ch-last_superscript > 6) {
 				editor.replaceRange(
 					'}',
 					{ line: position.line, ch: position.ch - 1 },
