@@ -472,6 +472,67 @@ export default class QuickLatexPlugin extends Plugin {
 
 		},
 		{
+			key: 'Shift-Space',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (!this.settings.customShorthand_toggle) return false;
+				
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+
+					// check for custom shorthand
+					if (this.settings.customShorthand_toggle && !this.withinText(editor, position.ch)) {
+						let keyword:string = "";
+						let keyword_length:number = 0;
+						for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+							keyword_length = this.shorthand_array[i][0].length;
+							if ( keyword_length > position.ch) {
+								continue;
+							} else if ( keyword_length == position.ch ) {
+								keyword = "@" + editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length },
+									{ line: position.line, ch: position.ch });
+							} else {
+								keyword = editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length - 1 },
+									{ line: position.line, ch: position.ch });
+							}
+							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+								keyword[0] == "@" ) {
+								if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
+									this.shorthand_array[i][1] != keyword) {
+									const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
+									const set_cursor_position = this.shorthand_array[i][1].indexOf("#cursor");
+									editor.replaceRange(this.shorthand_array[i][1],
+										{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+										{ line: position.line, ch: position.ch });
+									if (set_cursor_position != -1) {
+										editor.replaceRange("",
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+										editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
+									} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
+										editor.setCursor(
+											{ line: position.line, 
+											ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
+											);
+									} else {
+										
+									}									
+									return true;
+								};
+							};
+						};
+					};
+				};
+			}
+		},			
+
+		{
 			key: 'Enter',
 			run: (): boolean => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
@@ -573,6 +634,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseCurly_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -603,6 +665,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseSquare_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -632,6 +695,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseRound_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -641,6 +705,7 @@ export default class QuickLatexPlugin extends Plugin {
 							{ line: position.line, ch: position.ch },
 							{ line: position.line, ch: position.ch+2 });
 						const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
+						
 						if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 							editor.replaceSelection('()');
 							editor.setCursor({line:position.line, ch:position.ch+1});
@@ -661,7 +726,7 @@ export default class QuickLatexPlugin extends Plugin {
 				const editor  = view.editor
 
 				if (this.withinMath(editor)) {
-					if (this.settings.autoCloseRound_toggle) {
+					if (this.settings.autoCloseCurly_toggle) {
 						const position = editor.getCursor();
 						const end = editor.getLine(position.line).length
 						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
@@ -687,7 +752,7 @@ export default class QuickLatexPlugin extends Plugin {
 				const editor  = view.editor
 
 				if (this.withinMath(editor)) {
-					if (this.settings.autoCloseRound_toggle) {
+					if (this.settings.autoCloseSquare_toggle) {
 						const position = editor.getCursor();
 						const end = editor.getLine(position.line).length
 						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
