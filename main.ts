@@ -29,6 +29,7 @@ interface QuickLatexSettings {
 	autoEncloseSup_toggle: boolean;
 	autoEncloseSub_toggle: boolean;
 	encloseSelection_toggle: boolean;
+	autoGreekCommandMathMode_toggle: boolean;
 	customShorthand_toggle: boolean;
 	customShorthand_parameter: string
 }
@@ -52,6 +53,7 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoEncloseSup_toggle: true,
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
+	autoGreekCommandMathMode_toggle: true,
 	customShorthand_toggle: true,
 	customShorthand_parameter: "bi:\\binom{#cursor}{#tab};\nsq:\\sqrt{};\nbb:\\mathbb{};\nbf:\\mathbf{};\nte:\\text{};\ninf:\\infty;\n"+
 							"cd:\\cdot;\nqu:\\quad;\nti:\\times;\n"+
@@ -466,6 +468,17 @@ export default class QuickLatexPlugin extends Plugin {
 								}
 							}
 						}
+					}
+				} else if (this.settings.autoGreekCommandMathMode_toggle) {
+					const greekSymbols = ['alpha', 'Alpha', 'beta', 'gamma', 'Gamma', 'delta', 'Delta', 'epsilon', 'zeta', 'eta', 'theta', 'Theta', 'iota', 'kappa', 'lambda', 'Lambda', 'mu', 'nu', 'xi', 'Xi', 'omicron', 'pi', 'Pi', 'rho', 'sigma', 'Sigma', 'tau', 'upsilon', 'Upsilon', 'phi', 'Phi', 'chi', 'psi', 'Psi', 'omega', 'Omega', 'varepsilon', 'vartheta', 'varrho', 'varphi'];
+					const greekSymbolsSlashed = greekSymbols.map(x => '\\' + x);
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const last_slash = current_line.lastIndexOf('\\', position.ch - 1);
+					if (last_slash != -1) {
+						const entered = current_line.substring(last_slash, position.ch);
+						if (greekSymbolsSlashed.contains(entered))
+							editor.replaceRange('$' + entered + '$', { line: position.line, ch: position.ch - entered.length }, { line: position.line, ch: position.ch });
 					}
 				}
 			},
@@ -2107,6 +2120,18 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.addMatrixBlock_parameter = value;
 					await this.plugin.saveData(this.plugin.settings);
+				}));
+
+		new Setting(containerEl)
+			.setName('Greek symbols math mode')
+			.setDesc('Automatically surround commands to insert Greek character written outside math mode with math chars. '+
+			'Eg, typing \\alpha followed by space outside math mode will be replaced with "$\\alpha$"')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.autoGreekCommandMathMode_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.autoGreekCommandMathMode_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
 				}));
 
 		new Setting(containerEl)
