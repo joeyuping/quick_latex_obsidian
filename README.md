@@ -1,6 +1,11 @@
 # Quick Latex for Obsidian
 
-**【NEW】 v 2.4.0**
+**【NEW】 v 2.6.1**
+* The ":" symbol is now allowed within the custom shorthand! However, for old users, please replace all ":" within the custom shorthand parameter with ":::".
+* user can now selectively use tab to expand custom shorthand instead of space. 
+
+
+**v 2.4.0**
 * user can now set whether to use enter or shift-enter within align and cases block to automatically add next line symbols \\. (see settings page)  NOTE: the & symbol will no longer be automatically added after pressing enter, but an additional function for alignment is added (see next)
 * **new function**: when within align block, the plugin automatically add align symbol "&" before user-defined symbols (default: = > < \\le \\ge \\neq \\approx)
 e.g. x =(press "space" here), and "&" will be added before the = sign.
@@ -99,10 +104,10 @@ use Tab and Shift-Tab within math expressions to quickly jump from brackets to b
 
 ### 【Enhanced!】11. Custom shorthand
 * Use multi-letters custom shorthand for common latex snippets. e.g. typing "al" followed by "space" key will replace with "\\alpha"
-* You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":"  ;  end each set of snippets with ";" and a newline.
+* You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":::"  ;  end each set of snippets with ";" and a newline.
 e.g.
-al:\\alpha;
-bi:\\binom{#cursor}{#tab};
+al:::\\alpha;
+bi:::\\binom{#cursor}{#tab};
 * **Tip1:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
 * **Tip2:** Use "#cursor" within snippet to set the cursor position after replacement
 * **Tip3:** Use "#tab" within snippet for cases of multiple parameters. e.g. bi:\\binom{#cursor}{#tab},  after keying bi and spacebar, the shorthand will expand into \\binom{|}{#tab} with cursor in the first brackets. After keying the values in first brackets, press tab to jump to the #tab location to continue typing.
