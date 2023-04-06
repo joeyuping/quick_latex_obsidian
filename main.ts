@@ -2200,7 +2200,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 			'Pressing tab key in such cases will jump the cursor to the next "#tab" keyword.'+
 			'Shorthands now support multiline snippets too!'+
 			'(try uninstall then reinstalling the plugin to see the new set of shorthands.)'+
-			'【NOTE】For old users, please kindly replace ":" with ":::" and ";" with "---" in your custom shorthand parameter.')
+			'【NOTE】For old users, please kindly replace ":" with ":::" in your custom shorthand parameter.')
 			.setClass("text-snippets-class")
 			.addTextArea((text) => text
 				.setValue(this.plugin.settings.customShorthand_parameter)
@@ -2213,12 +2213,11 @@ class QuickLatexSettingTab extends PluginSettingTab {
 						value = value.slice(0,-1)
 					}
 					if(value.lastIndexOf(";\n")==-1){
-						if(value.lastIndexOf(":::")==-1){
-							this.plugin.shorthand_array = value.split(",").map(item=>item.split(":").map(item=>item.trim()));
-						} else {
-							this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::").map(item=>item.trim()));
-						}
+						this.plugin.shorthand_array = value.split(",").map(item=>item.split(":").map(item=>item.trim()));
+					} else if (value.lastIndexOf(":::")==-1) {
 						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":"));
+					} else {
+						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::").map(item=>item.trim()));
 					}
 					
 					await this.plugin.saveData(this.plugin.settings);
