@@ -829,16 +829,18 @@ export default class QuickLatexPlugin extends Plugin {
 
 		// preprocess shorthand array
 		let shorthands = this.settings.customShorthand_parameter
-		while(shorthands.slice(-1)=="\n"){
-			shorthands = shorthands.slice(0,-1)
+		while(shorthands.slice(-2)=="\n"){
+			shorthands = shorthands.slice(0,-2)
 		}
 		if(shorthands.slice(-1)==";"){
 			shorthands = shorthands.slice(0,-1)
 		}
 		if(shorthands.lastIndexOf(";\n")==-1){
 			this.shorthand_array = shorthands.split(",").map(item=>item.split(":").map(item=>item.trim()));
-		} else {
+		} else if (shorthands.lastIndexOf(":::")==-1) {
 			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":"));
+		} else {
+			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":::").map(item=>item.trim()));
 		}
 		
 		// preprocess autoAlign array
