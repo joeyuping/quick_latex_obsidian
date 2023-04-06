@@ -1,7 +1,7 @@
 # Quick Latex for Obsidian
 
 **【NEW】 v 2.6.1**
-* One can now type Greek letters directly **without** the $ symbol. e.g. \alpha (press "space" here) will be converted to $\alpha$. This is useful for typing Greek letters in the middle of a sentence. (Huge thanks to @FlorisE for contributing this feature!)
+* One can now type Greek letters directly **without** the $ symbol. e.g. \alpha (press "space" here) will be converted to \$\alpha\$. This is useful for typing Greek letters in the middle of a sentence. (Huge thanks to @FlorisE for contributing this feature!)
 * The ":" symbol is now allowed within the custom shorthand! However, for old users, please replace all ":" within the custom shorthand parameter with ":::".
 * user can now selectively use tab to expand custom shorthand instead of space. 
 
@@ -147,4 +147,4 @@ see https://github.com/joeyuping/quick_latex_obsidian
 ## Support
 Really hope this plugin has been helpful!
 
-<a href='https://ko-fi.com/joeyuping' target='_blank'><img height='56' style='border:0px;height:56px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+<a href='https://ko-fi.com/joeyuping' target='_blank'><img height='35' style='border:0px;height:35px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
