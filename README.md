@@ -23,7 +23,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ### 1. Auto close \$ symbol + Move cursor between \$\$ symbols
 * Typing **\$** will automatically close with **\$** and shift the cursor in between the **\$\$** symbols.
-* **Tip:** If you use the $ symbol often as currency symbol, you may toggle off the "auto close math symbol" function in the plugin setting.
+* **Tip:** If you use the \$ symbol often as currency symbol, you may toggle off the "auto close math symbol" function in the plugin setting. Alternatively, type "\\$" to insert a $ symbol without triggering the auto close function.
 
 ![auto Move into Math](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_autoCloseMath.gif)
 
