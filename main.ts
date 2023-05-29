@@ -821,7 +821,6 @@ export default class QuickLatexPlugin extends Plugin {
 	]));
 
 	async onload() {
-		console.log('loading Quick-Latex plugin');
 
 		this.registerEditorExtension(this.makeExtensionThing());
 
@@ -836,11 +835,11 @@ export default class QuickLatexPlugin extends Plugin {
 			shorthands = shorthands.slice(0,-1)
 		}
 		if(shorthands.lastIndexOf(";\n")==-1){
-			this.shorthand_array = shorthands.split(",").map(item=>item.split(":").map(item=>item.trim()));
+			this.shorthand_array = shorthands.split(",").map(item=>item.split(":"));
 		} else if (shorthands.lastIndexOf(":::")==-1) {
 			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":"));
 		} else {
-			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":::").map(item=>item.trim()));
+			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":::"));
 		}
 		
 		// preprocess autoAlign array
@@ -1920,7 +1919,6 @@ export default class QuickLatexPlugin extends Plugin {
 	};
 
 	public onunload(): void {
-		console.log('unloading Quick-Latex plugin');
 
 		this.app.workspace.iterateCodeMirrors((cm) => {
 			cm.off('vim-mode-change', this.handleVimModeChange);
@@ -2215,11 +2213,11 @@ class QuickLatexSettingTab extends PluginSettingTab {
 						value = value.slice(0,-1)
 					}
 					if(value.lastIndexOf(";\n")==-1){
-						this.plugin.shorthand_array = value.split(",").map(item=>item.split(":").map(item=>item.trim()));
+						this.plugin.shorthand_array = value.split(",").map(item=>item.split(":"));
 					} else if (value.lastIndexOf(":::")==-1) {
 						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":"));
 					} else {
-						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::").map(item=>item.trim()));
+						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::"));
 					}
 					
 					await this.plugin.saveData(this.plugin.settings);
