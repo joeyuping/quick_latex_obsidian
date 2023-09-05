@@ -1,6 +1,18 @@
 # Quick Latex for Obsidian
 
-**【Custom shorthands enhanced!! see below】**
+**【NEW】 v 2.6.1**
+* One can now type Greek letters directly **without** the $ symbol. e.g. \alpha (press "space" here) will be converted to \$\alpha\$. This is useful for typing Greek letters in the middle of a sentence. (Huge thanks to @FlorisE for contributing this feature!)
+* The ":" symbol is now allowed within the custom shorthand! However, for old users, please replace all ":" within the custom shorthand parameter with ":::".
+* user can now selectively use tab to expand custom shorthand instead of space. 
+
+
+**v 2.4.0**
+* user can now set whether to use enter or shift-enter within align and cases block to automatically add next line symbols \\. (see settings page)  NOTE: the & symbol will no longer be automatically added after pressing enter, but an additional function for alignment is added (see next)
+* **new function**: when within align block, the plugin automatically add align symbol "&" before user-defined symbols (default: = > < \\le \\ge \\neq \\approx)
+e.g. x =(press "space" here), and "&" will be added before the = sign.
+* when at the end of the align, matrix or cases block, pressing "tab" once (for align) or twice (for matrix and cases block) will bring the cursor out of the block.
+* If next line is double dollar signs, press "tab" again will jump out of the double dollar signs.
+
 
 ## Description:
 This simple plugin adds various shortcuts to speedup latex math typing.
@@ -11,7 +23,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ### 1. Auto close \$ symbol + Move cursor between \$\$ symbols
 * Typing **\$** will automatically close with **\$** and shift the cursor in between the **\$\$** symbols.
-* **Tip:** If you use the $ symbol often as currency symbol, you may toggle off the "auto close math symbol" function in the plugin setting.
+* **Tip:** If you use the \$ symbol often as currency symbol, you may toggle off the "auto close math symbol" function in the plugin setting. Alternatively, type "\\$" to insert a $ symbol without triggering the auto close function.
 
 ![auto Move into Math](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_autoCloseMath.gif)
 
@@ -61,7 +73,7 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 * **Tip 1:** If you have already typed some expressions and want to add the \begin{align\*} and \end{align\*} to the front and back, you can first select the texts then press "Alt+Shift+A" (Mac: "Option+Shift+A").
 
 * **Tip 2: Quick next line syntax within align block**
-    * pressing **"enter"** within an align block will automatically insert **\\\\** to the end of the line, go to next line and add the **"&"** symbol.
+    * pressing **"enter"** (can be changed to "shift-enter" in setting) within an align block will automatically insert **\\\\** to the end of the line and go to next line.
     * press **"shift+enter"** to go to next line **without** adding these symbols.
 
 * **Tip 3: Changing parameter**
@@ -88,12 +100,15 @@ This simple plugin adds various shortcuts to speedup latex math typing.
 
 ![add Matrix Block](https://raw.githubusercontent.com/joeyuping/quick_latex_obsidian/master/demo_gif/g_matrixblock.gif)
 
-### 【Enhanced!】10. Custom shorthand
+### 10. Tab & Shift-Tab to jump from brackets to brackets
+use Tab and Shift-Tab within math expressions to quickly jump from brackets to brackets. 
+
+### 【Enhanced!】11. Custom shorthand
 * Use multi-letters custom shorthand for common latex snippets. e.g. typing "al" followed by "space" key will replace with "\\alpha"
-* You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":"  ;  end each set of snippets with ";" and a newline.
+* You may set your own custom shorthand in the plugin settings page. Separate the shorthand and the snippet with ":::"  ;  end each set of snippets with ";" and a newline.
 e.g.
-al:\\alpha;
-bi:\\binom{#cursor}{#tab};
+al:::\\alpha;
+bi:::\\binom{#cursor}{#tab};
 * **Tip1:** If the expression ends with curly brackets "{}", cursor will automatically be placed within the brackets.  
 * **Tip2:** Use "#cursor" within snippet to set the cursor position after replacement
 * **Tip3:** Use "#tab" within snippet for cases of multiple parameters. e.g. bi:\\binom{#cursor}{#tab},  after keying bi and spacebar, the shorthand will expand into \\binom{|}{#tab} with cursor in the first brackets. After keying the values in first brackets, press tab to jump to the #tab location to continue typing.
@@ -126,5 +141,10 @@ bi:\\binom{#cursor}{#tab};
 * Compatible with builtin vim-mode.
 
 ---
-## source code:
+## Source Code:
 see https://github.com/joeyuping/quick_latex_obsidian
+
+## Support
+Really hope this plugin has been helpful!
+
+<a href='https://ko-fi.com/joeyuping' target='_blank'><img height='35' style='border:0px;height:35px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
