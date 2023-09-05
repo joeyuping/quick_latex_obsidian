@@ -18,16 +18,20 @@ interface QuickLatexSettings {
 	autoCloseCurly_toggle: boolean;
 	addAlignBlock_toggle: boolean;
 	addAlignBlock_parameter: string;
+	autoAlignSymbols: string;
+	addCasesBlock_toggle: boolean;
+	shiftEnter_toggle: boolean;
 	addMatrixBlock_toggle: boolean;
 	addMatrixBlock_parameter: string;
-	addCasesBlock_toggle: boolean;
 	autoFraction_toggle: boolean;
 	autoLargeBracket_toggle: boolean;
 	autoSumLimit_toggle: boolean;
 	autoEncloseSup_toggle: boolean;
 	autoEncloseSub_toggle: boolean;
 	encloseSelection_toggle: boolean;
+	autoGreekCommandMathMode_toggle: boolean;
 	customShorthand_toggle: boolean;
+	useTabtoComplete_toggle: boolean;
 	customShorthand_parameter: string
 }
 
@@ -39,31 +43,36 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 	autoCloseCurly_toggle: true,
 	addAlignBlock_toggle: true,
 	addAlignBlock_parameter: "align*",
+	autoAlignSymbols: "= > < \\le \\ge \\neq \\approx",
+	addCasesBlock_toggle: true,
+	shiftEnter_toggle: false,
 	addMatrixBlock_toggle: true,
 	addMatrixBlock_parameter: "pmatrix",
-	addCasesBlock_toggle: true,
 	autoFraction_toggle: true,
 	autoLargeBracket_toggle: true,
 	autoSumLimit_toggle: true,
 	autoEncloseSup_toggle: true,
 	autoEncloseSub_toggle: true,
 	encloseSelection_toggle: true,
+	autoGreekCommandMathMode_toggle: true,
 	customShorthand_toggle: true,
-	customShorthand_parameter: "bi:\\binom{#cursor}{#tab};\nsq:\\sqrt{};\nbb:\\mathbb{};\nbf:\\mathbf{};\nte:\\text{};\ninf:\\infty;\n"+
-							"cd:\\cdot;\nqu:\\quad;\nti:\\times;\n"+
-							"al:\\alpha;\nbe:\\beta;\nga:\\gamma;\nGa:\\Gamma;\n"+
-							"de:\\delta;\nDe:\\Delta;\nep:\\epsilon;\nze:\\zeta;\n"+
-							"et:\\eta;\nth:\\theta;\nTh:\\Theta;\nio:\\iota;\n"+
-							"ka:\\kappa;\nla:\\lambda;\nLa:\\Lambda;\nmu:\\mu;\n"+
-							"nu:\\nu;\nxi:\\xi;\nXi:\\Xi;\npi:\\pi;\nPi:\\Pi;\n"+
-							"rh:\\rho;\nsi:\\sigma;\nSi:\\Sigma;\nta:\\tau;\n"+
-							"up:\\upsilon;\nUp:\\Upsilon;\nph:\\phi;\nPh:\\Phi;\nch:\\chi;\n"+
-							"ps:\\psi;\nPs:\\Psi;\nom:\\omega;\nOm:\\Omega"
+	useTabtoComplete_toggle: false,
+	customShorthand_parameter: "bi:::\\binom{#cursor}{#tab};\nsq:::\\sqrt{};\nbb:::\\mathbb{};\nbf:::\\mathbf{};\nte:::\\text{};\ninf:::\\infty;\n"+
+							"cd:::\\cdot;\nqu:::\\quad;\nti:::\\times;\n"+
+							"al:::\\alpha;\nbe:::\\beta;\nga:::\\gamma;\nGa:::\\Gamma;\n"+
+							"de:::\\delta;\nDe:::\\Delta;\nep:::\\epsilon;\nze:::\\zeta;\n"+
+							"et:::\\eta;\nth:::\\theta;\nTh:::\\Theta;\nio:::\\iota;\n"+
+							"ka:::\\kappa;\nla:::\\lambda;\nLa:::\\Lambda;\nmu:::\\mu;\n"+
+							"nu:::\\nu;\nxi:::\\xi;\nXi:::\\Xi;\npi:::\\pi;\nPi:::\\Pi;\n"+
+							"rh:::\\rho;\nsi:::\\sigma;\nSi:::\\Sigma;\nta:::\\tau;\n"+
+							"up:::\\upsilon;\nUp:::\\Upsilon;\nph:::\\phi;\nPh:::\\Phi;\nch:::\\chi;\n"+
+							"ps:::\\psi;\nPs:::\\Psi;\nom:::\\omega;\nOm:::\\Omega"
 }
-
+ 
 export default class QuickLatexPlugin extends Plugin {
 	settings: QuickLatexSettings;
 	shorthand_array: string[][];
+	autoAlign_array: string[];
 
     private vimAllow_autoCloseMath: boolean = true;
 
@@ -115,7 +124,12 @@ export default class QuickLatexPlugin extends Plugin {
 					}
 					// auto close math
 					if (this.settings.autoCloseMath_toggle && this.vimAllow_autoCloseMath) {
-						editor.replaceSelection("$");
+						const prev_char = editor.getRange({line:position.line,ch:position.ch-1},{line:position.line,ch:position.ch})
+						const line = editor.getLine(position.line)
+						const count = (line.match(/\$/g) || []).length
+						if (prev_char != "\\" && count % 2 == 0) {
+							editor.replaceSelection("$");
+						}
 					}
 					// move into math
 					if (this.settings.moveIntoMath_toggle) {
@@ -140,6 +154,23 @@ export default class QuickLatexPlugin extends Plugin {
 			},
 
 		},
+			// delete pair of math symbols with backspace
+		{	key: 'Backspace',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+				
+				const editor  = view.editor
+				const position = editor.getCursor()
+				const prev_char = editor.getRange({line:position.line, ch:position.ch-1},{line:position.line, ch:position.ch})
+				const next_char = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+1})
+				if (prev_char == "$" && next_char == "$") {
+					editor.replaceRange("",{line:position.line, ch:position.ch-1},{line:position.line, ch:position.ch+1})
+					return true
+				}
+				return false
+			}	
+		},
 		{
 			key: 'Tab',
 			run: (): boolean => {
@@ -147,40 +178,142 @@ export default class QuickLatexPlugin extends Plugin {
 				if (!view) return false
 
 				const editor  = view.editor
-
-				// Tab shortcut for matrix block
-				if (this.settings.addMatrixBlock_toggle) {
-					if (this.withinAnyBrackets_document(editor,
-					'\\begin{' + this.settings.addMatrixBlock_parameter,
-					'\\end{' + this.settings.addMatrixBlock_parameter,
-					)) {
-						editor.replaceSelection(' & ')
-						return true
-					};
-				}
-
-				// Tab shortcut for cases block
-				if (this.settings.addCasesBlock_toggle) {
-					if (this.withinAnyBrackets_document(editor,
-					'\\begin{cases}',
-					'\\end{cases}'
-					)) {
-						editor.replaceSelection(' & ')
-						return true
-					};
-				}
 				
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const end_pos = editor.getLine(position.line).length;
+					const next_line = editor.getLine(position.line+1)
 
-				// Tab to go to next #tab
-				const position = editor.getCursor();
-				const current_line = editor.getLine(position.line);
-				const tab_position = current_line.indexOf("#tab");
-				if (tab_position!=-1){
-					editor.replaceRange("",
-					{line:position.line, ch:tab_position},
-					{line:position.line, ch:tab_position+4})
-					editor.setCursor({line:position.line, ch:tab_position})
-					return true
+					// check for custom shorthand
+					if (this.settings.customShorthand_toggle && !this.withinText(editor, position.ch)) {
+						if(this.settings.useTabtoComplete_toggle) {
+							if (this.customShorthand(editor, position)){
+								return true
+							};
+						}
+					};
+
+					// Tab shortcut for matrix block
+					if (this.settings.addMatrixBlock_toggle) {
+						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter+'}', "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+						const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter+'}', "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+						let state = false
+						let end_text = ""
+						for (let i = 0; i < begin_matrix.length; i++) {
+							if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+									state = true
+									end_text = end_matrix[i]
+									break;
+								};
+						}
+						const position = editor.getCursor();
+						const prev3_char = editor.getRange({line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+						
+						if (state) {
+							if (prev3_char == ' & ') {
+								editor.replaceRange('', {line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+								editor.setCursor({line:position.line, ch:position.ch+end_text.length-3})
+								return true
+							} else {
+								editor.replaceSelection(' & ')
+								return true
+							}
+						}
+					}
+
+					// Tab shortcut for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+						)) {
+							const position = editor.getCursor();
+							const prev3_char = editor.getRange({line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+							const next_line = editor.getLine(position.line+1)
+							if (prev3_char == ' & ' && next_line == '\\end{cases}') {
+								editor.replaceRange('', {line:position.line, ch:position.ch-3},{line:position.line, ch:position.ch})
+								editor.setCursor({line:position.line+1, ch:next_line.length})
+								return true
+							} else {
+								editor.replaceSelection(' & ')
+								return true
+							}
+						};
+					}
+					
+					// Tab to go to next #tab
+					const tab_position = current_line.indexOf("#tab", position.ch);
+					if (tab_position!=-1){
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+4})
+						editor.setCursor({line:position.line, ch:tab_position})
+						return true
+					}
+					
+
+					// Tab out of $
+					const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
+					if (next_2 == "$$") {
+						editor.setCursor({line:position.line, ch:position.ch+2})
+						return true
+					} else if (position.ch == end_pos && next_line == "$$") {
+						editor.setCursor({line:position.line+1, ch:next_line.length})
+						return true
+					} else if (next_2[0] == "$") {
+						editor.setCursor({line:position.line, ch:position.ch+1})
+						return true
+					}
+
+					// Tab to next close bracket				
+					const following_text = editor.getRange({line:position.line, ch:position.ch+1},{line:position.line, ch:current_line.length})
+					const close_symbols = ['}', ']', ')', '$'] 
+					for (let i = 0; i < following_text.length; i++) {
+						if (close_symbols.contains(following_text[i])) {
+							editor.setCursor({line:position.line, ch:position.ch+i+1})
+							return true
+						}					
+					}
+
+					// Tab out of align block
+					if (position.ch == end_pos && next_line == '\\end{' + this.settings.addAlignBlock_parameter+'}') {
+						editor.setCursor({line:position.line+1, ch:next_line.length})
+						return true
+					}
+
+				}
+				return false
+			},
+		},
+		{
+			key: 'Shift-Tab',
+			run: (): boolean => {
+				
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+					const preceding_text = editor.getRange({line:position.line, ch:0},{line:position.line, ch:position.ch})
+					const close_symbols = ['}', ']', ')'] 
+					for (let i = preceding_text.length; i >= 0; i--) {
+						if (close_symbols.contains(preceding_text[i])) {
+							editor.setCursor({line:position.line, ch:i})
+							return true
+						} else if (position.ch-i > 1 && preceding_text[i]=="$") {
+							editor.setCursor({line:position.line, ch:i+1})
+							return true
+						} else if (preceding_text.slice(-2)=="$$") {
+							editor.setCursor({line:position.line, ch:position.ch-2})
+							return true
+						} else if (preceding_text[-1]=="$") {
+							editor.setCursor({line:position.line, ch:position.ch-1})
+							return true	
+						}			
+					}
 				}
 				return false
 			},
@@ -190,7 +323,7 @@ export default class QuickLatexPlugin extends Plugin {
 			run: (): boolean => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
 				if (!view) return false
-				
+
 				const editor  = view.editor
 
 				if (!this.settings.autoFraction_toggle &&
@@ -206,46 +339,10 @@ export default class QuickLatexPlugin extends Plugin {
 
 					// check for custom shorthand
 					if (this.settings.customShorthand_toggle && !this.withinText(editor, position.ch)) {
-						let keyword:string = "";
-						let keyword_length:number = 0;
-						for (let i = 0 ; i < this.shorthand_array.length ; i++) {
-							keyword_length = this.shorthand_array[i][0].length;
-							if ( keyword_length > position.ch) {
-								continue;
-							} else if ( keyword_length == position.ch ) {
-								keyword = "@" + editor.getRange(
-									{ line: position.line, ch: position.ch - keyword_length },
-									{ line: position.line, ch: position.ch });
-							} else {
-								keyword = editor.getRange(
-									{ line: position.line, ch: position.ch - keyword_length - 1 },
-									{ line: position.line, ch: position.ch });
+						if(!this.settings.useTabtoComplete_toggle) {
+							if (this.customShorthand(editor, position)) {
+								return true
 							}
-							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
-								keyword[0] == "@" ) {
-								if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
-									this.shorthand_array[i][1] != keyword) {
-									const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
-									const set_cursor_position = this.shorthand_array[i][1].indexOf("#cursor");
-									editor.replaceRange(this.shorthand_array[i][1],
-										{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										{ line: position.line, ch: position.ch });
-									if (set_cursor_position != -1) {
-										editor.replaceRange("",
-										{line:position.line, ch:position.ch - keyword_length + set_cursor_position},
-										{line:position.line, ch:position.ch - keyword_length + set_cursor_position+7});
-										editor.setCursor({line:position.line, ch:position.ch - keyword_length + set_cursor_position})
-									} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
-										editor.setCursor(
-											{ line: position.line, 
-											ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
-											);
-									} else {
-										
-									}									
-									return true;
-								};
-							};
 						}
 					};
 
@@ -285,12 +382,30 @@ export default class QuickLatexPlugin extends Plugin {
 					}
 
 					// retrieve the last divide symbol
-					let last_divide = current_line.lastIndexOf('/', position.ch - 1);
+					let last_divide = current_line.lastIndexOf('/', position.ch - 2);
 
+					while (last_divide != -1) {
+						const around_divide = editor.getRange(
+							{ line: position.line, ch: last_divide - 1 },
+							{ line: position.line, ch: last_divide + 2 });
+						if (around_divide[0] == ' ' && around_divide[2] == ' ') {
+							last_divide = current_line.lastIndexOf('^', last_divide - 1);
+						} else if (last_divide < last_math) {
+							last_divide = -1
+							break;
+						} else {
+							break;
+						}
+					}
+ 
 					// perform autoEncloseSup
 					if (this.settings.autoEncloseSup_toggle) {
 						if (last_superscript > last_divide) {
-							return this.autoEncloseSup(editor, event, last_superscript);
+							// if any brackets from last sup to cursor still unclosed, dont do autoEncloseSup yet
+							const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+							if (!brackets.some(e => this.unclosed_bracket(editor, e[0], e[1], position.ch, last_superscript)[0])) {
+								return this.autoEncloseSup(editor, event, last_superscript);
+							}
 						};
 					};
 
@@ -314,39 +429,126 @@ export default class QuickLatexPlugin extends Plugin {
 							return this.autoLargeBracket(editor, event);
 						};
 					}
+
+					// perform autoAlign
+					if (this.autoAlign_array.length) {
+						if (this.withinAnyBrackets_document(
+							editor,
+							'\\begin{' + this.settings.addAlignBlock_parameter,
+							'\\end{' + this.settings.addAlignBlock_parameter)
+						) {
+							let keyword:string = "";
+							let keyword_length:number = 0;
+							for (let i = 0 ; i < this.autoAlign_array.length ; i++) {
+								keyword_length = this.autoAlign_array[i].length;
+								if ( keyword_length > position.ch) {
+									continue;
+								} else {
+									keyword = editor.getRange(
+										{ line: position.line, ch: position.ch - keyword_length },
+										{ line: position.line, ch: position.ch });
+								}
+								if (keyword == this.autoAlign_array[i]) {
+									editor.replaceRange('&', { line: position.line, ch: position.ch - keyword_length });
+									return false;
+								}
+							}
+						}
+					}
+				} else if (this.settings.autoGreekCommandMathMode_toggle) {
+					const greekSymbols = ['alpha', 'Alpha', 'beta', 'gamma', 'Gamma', 'delta', 'Delta', 'epsilon', 'zeta', 'eta', 'theta', 'Theta', 'iota', 'kappa', 'lambda', 'Lambda', 'mu', 'nu', 'xi', 'Xi', 'omicron', 'pi', 'Pi', 'rho', 'sigma', 'Sigma', 'tau', 'upsilon', 'Upsilon', 'phi', 'Phi', 'chi', 'psi', 'Psi', 'omega', 'Omega', 'varepsilon', 'vartheta', 'varrho', 'varphi'];
+					const greekSymbolsSlashed = greekSymbols.map(x => '\\' + x);
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const last_slash = current_line.lastIndexOf('\\', position.ch - 1);
+					if (last_slash != -1) {
+						const entered = current_line.substring(last_slash, position.ch);
+						if (greekSymbolsSlashed.contains(entered))
+							editor.replaceRange('$' + entered + '$', { line: position.line, ch: position.ch - entered.length }, { line: position.line, ch: position.ch });
+					}
 				}
 			},
 
 		},
+		{
+			key: 'Shift-Space',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+
+				const editor  = view.editor
+
+				if (!this.settings.customShorthand_toggle) return false;
+				
+				if (this.withinMath(editor)) {
+					const position = editor.getCursor();
+
+					// check for custom shorthand
+					if (this.settings.customShorthand_toggle && !this.withinText(editor, position.ch)) {
+						let keyword:string = "";
+						let keyword_length:number = 0;
+						for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+							keyword_length = this.shorthand_array[i][0].length;
+							if ( keyword_length > position.ch) {
+								continue;
+							} else if ( keyword_length == position.ch ) {
+								keyword = "@" + editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length },
+									{ line: position.line, ch: position.ch });
+							} else {
+								keyword = editor.getRange(
+									{ line: position.line, ch: position.ch - keyword_length - 1 },
+									{ line: position.line, ch: position.ch });
+							}
+							if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+								keyword[0] == "@" ) {
+								if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
+									this.shorthand_array[i][1] != keyword) {
+									const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
+									const set_cursor_position = this.shorthand_array[i][1].indexOf("#cursor");
+									editor.replaceRange(this.shorthand_array[i][1],
+										{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+										{ line: position.line, ch: position.ch });
+									if (set_cursor_position != -1) {
+										editor.replaceRange("",
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+										{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+										editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
+									} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
+										editor.setCursor(
+											{ line: position.line, 
+											ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
+											);
+									} else {
+										
+									}									
+									return true;
+								};
+							};
+						};
+					};
+				};
+			}
+		},			
+
 		{
 			key: 'Enter',
 			run: (): boolean => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
 				if (!view) return false
 				const editor  = view.editor
-				if (this.settings.addAlignBlock_toggle) {
+				if (this.settings.addAlignBlock_toggle && this.settings.shiftEnter_toggle==false) {
 					if (this.withinAnyBrackets_document(
 						editor,
 						'\\begin{' + this.settings.addAlignBlock_parameter,
 						'\\end{' + this.settings.addAlignBlock_parameter)
 					) {
-						editor.replaceSelection('\\\\\n&')
+						editor.replaceSelection('\\\\\n')
 						return true;
 					}
 				}
 
-				if (this.settings.addMatrixBlock_toggle) {
-					if (this.withinAnyBrackets_document(
-						editor,
-						'\\begin{' + this.settings.addMatrixBlock_parameter,
-						'\\end{' + this.settings.addMatrixBlock_parameter
-					)) {
-						editor.replaceSelection(' \\\\ ')
-						return true;
-					}
-				}
-
-				if (this.settings.addCasesBlock_toggle) {
+				if (this.settings.addCasesBlock_toggle && this.settings.shiftEnter_toggle==false) {
 					if (this.withinAnyBrackets_document(
 						editor,
 						'\\begin{cases}',
@@ -356,6 +558,23 @@ export default class QuickLatexPlugin extends Plugin {
 						return true;
 					}
 				}
+
+				if (this.settings.addMatrixBlock_toggle) {
+					const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter+'}', "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+					const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter+'}', "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+					let state = false
+					for (let i = 0; i < begin_matrix.length; i++) {
+						if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+								state = true
+								break;
+							};
+					}
+					if (state) {
+						editor.replaceSelection(' \\\\ ')
+						return true
+					}
+				}
+
 				// double enter for $$
 				if (this.withinMath(editor)) {
 					const position = editor.getCursor();
@@ -375,6 +594,36 @@ export default class QuickLatexPlugin extends Plugin {
 			},
 		},
 		{
+			key: 'Shift-Enter',
+			run: (): boolean => {
+				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
+				if (!view) return false
+				const editor  = view.editor
+				if (this.settings.addAlignBlock_toggle && this.settings.shiftEnter_toggle==true) {
+					if (this.withinAnyBrackets_document(
+						editor,
+						'\\begin{' + this.settings.addAlignBlock_parameter,
+						'\\end{' + this.settings.addAlignBlock_parameter)
+					) {
+						editor.replaceSelection('\\\\\n')
+						return true;
+					}
+				}
+
+				if (this.settings.addCasesBlock_toggle && this.settings.shiftEnter_toggle==true) {
+					if (this.withinAnyBrackets_document(
+						editor,
+						'\\begin{cases}',
+						'\\end{cases}'
+					)) {
+						editor.replaceSelection(' \\\\\n')
+						return true;
+					}
+				}
+				return false;
+			}
+		},
+		{
 			key: '{',
 			run: (): boolean => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView)
@@ -384,6 +633,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseCurly_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -414,6 +664,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseSquare_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -443,6 +694,7 @@ export default class QuickLatexPlugin extends Plugin {
 
 				if (this.withinMath(editor)) {
 					if (this.settings.autoCloseRound_toggle) {
+						if (editor.getSelection().length > 0) {return false};
 						const position = editor.getCursor();
 						const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
 						const next_char = editor.getRange(
@@ -452,6 +704,7 @@ export default class QuickLatexPlugin extends Plugin {
 							{ line: position.line, ch: position.ch },
 							{ line: position.line, ch: position.ch+2 });
 						const followed_by_$spacetabnonedoubleslash = (['$',' ','	',''].contains(next_char) || next_2char == '\\\\');
+						
 						if (!this.withinAnyBrackets_inline(editor, brackets) && followed_by_$spacetabnonedoubleslash) {
 							editor.replaceSelection('()');
 							editor.setCursor({line:position.line, ch:position.ch+1});
@@ -472,7 +725,7 @@ export default class QuickLatexPlugin extends Plugin {
 				const editor  = view.editor
 
 				if (this.withinMath(editor)) {
-					if (this.settings.autoCloseRound_toggle) {
+					if (this.settings.autoCloseCurly_toggle) {
 						const position = editor.getCursor();
 						const end = editor.getLine(position.line).length
 						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
@@ -498,7 +751,7 @@ export default class QuickLatexPlugin extends Plugin {
 				const editor  = view.editor
 
 				if (this.withinMath(editor)) {
-					if (this.settings.autoCloseRound_toggle) {
+					if (this.settings.autoCloseSquare_toggle) {
 						const position = editor.getCursor();
 						const end = editor.getLine(position.line).length
 						const next_sym = editor.getRange({line:position.line,ch:position.ch},{line:position.line,ch:position.ch+1})
@@ -568,7 +821,6 @@ export default class QuickLatexPlugin extends Plugin {
 	]));
 
 	async onload() {
-		console.log('loading Quick-Latex plugin');
 
 		this.registerEditorExtension(this.makeExtensionThing());
 
@@ -576,18 +828,27 @@ export default class QuickLatexPlugin extends Plugin {
 
 		// preprocess shorthand array
 		let shorthands = this.settings.customShorthand_parameter
-		while(shorthands.slice(-1)=="\n"){
-			shorthands = shorthands.slice(0,-1)
+		while(shorthands.slice(-2)=="\n"){
+			shorthands = shorthands.slice(0,-2)
 		}
 		if(shorthands.slice(-1)==";"){
 			shorthands = shorthands.slice(0,-1)
 		}
 		if(shorthands.lastIndexOf(";\n")==-1){
-			this.shorthand_array = shorthands.split(",").map(item=>item.split(":").map(item=>item.trim()));
-		} else {
+			this.shorthand_array = shorthands.split(",").map(item=>item.split(":"));
+		} else if (shorthands.lastIndexOf(":::")==-1) {
 			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":"));
+		} else {
+			this.shorthand_array = shorthands.split(";\n").map(item=>item.split(":::"));
 		}
 		
+		// preprocess autoAlign array
+		if (this.settings.autoAlignSymbols.trim() == "") {
+			this.autoAlign_array = [];
+		} else {
+			this.autoAlign_array = this.settings.autoAlignSymbols.split(" ");
+		}
+
 		this.app.workspace.onLayoutReady(() => {
 			this.registerCodeMirror((cm: CodeMirror.Editor) => {
 				cm.on('vim-mode-change', this.handleVimModeChange);
@@ -763,9 +1024,9 @@ export default class QuickLatexPlugin extends Plugin {
 											{ line: position.line, ch: position.ch });
 										if (set_cursor_position != -1) {
 											editor.replaceRange("",
-											{line:position.line, ch:position.ch - keyword_length + set_cursor_position},
-											{line:position.line, ch:position.ch - keyword_length + set_cursor_position+7});
-											editor.setCursor({line:position.line, ch:position.ch - keyword_length + set_cursor_position})
+											{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+											{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+											editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
 										} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
 											editor.setCursor(
 												{ line: position.line, 
@@ -773,21 +1034,7 @@ export default class QuickLatexPlugin extends Plugin {
 												);
 										} else {
 											
-										}			
-										
-										// if (this.shorthand_array[i][1].slice(-2) == "{}") {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// 	editor.setCursor(
-										// 		{ line: position.line, 
-										// 		ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
-										// 		);
-										// } else {
-										// 	editor.replaceRange(this.shorthand_array[i][1],
-										// 		{ line: position.line, ch: position.ch - keyword_length - replace_slash },
-										// 		{ line: position.line, ch: position.ch });
-										// }									
+										}											
 										event.preventDefault();
 										return;
 									};
@@ -820,7 +1067,7 @@ export default class QuickLatexPlugin extends Plugin {
 							const two_letters_after_superscript = editor.getRange(
 								{ line: position.line, ch: last_superscript + 1 },
 								{ line: position.line, ch: last_superscript + 3 });
-							if (two_letters_after_superscript.slice(0) == '{' || two_letters_after_superscript == ' {') {
+							if (two_letters_after_superscript[0] == '{' || two_letters_after_superscript == ' {') {
 								last_superscript = current_line.lastIndexOf('^', last_superscript - 1);
 							} else if (last_superscript < last_math) {
 								last_superscript = -1
@@ -831,13 +1078,31 @@ export default class QuickLatexPlugin extends Plugin {
 						}
 
 						// retrieve the last divide symbol
-						let last_divide = current_line.lastIndexOf('/', position.ch - 1);
+						let last_divide = current_line.lastIndexOf('/', position.ch - 2);
+
+						while (last_divide != -1) {
+							const around_divide = editor.getRange(
+								{ line: position.line, ch: last_divide - 1 },
+								{ line: position.line, ch: last_divide + 2 });
+							if (around_divide[0] == ' ' && around_divide[2] == ' ') {
+								last_divide = current_line.lastIndexOf('^', last_divide - 1);
+							} else if (last_divide < last_math) {
+								last_divide = -1
+								break;
+							} else {
+								break;
+							}
+						}
 
 						// perform autoEncloseSup
 						if (this.settings.autoEncloseSup_toggle) {
 							if (last_superscript > last_divide) {
-								this.autoEncloseSup(editor, event, last_superscript);
-								return;
+								// if any brackets from last sup to cursor still unclosed, dont do autoEncloseSup yet
+								const brackets = [['(', ')'], ['{', '}'], ['[', ']']];
+								if (!brackets.some(e => this.unclosed_bracket(editor, e[0], e[1], position.ch, last_superscript)[0])) {
+									this.autoEncloseSup(editor, event, last_superscript);
+									return;
+								}
 							};
 						};
 
@@ -870,16 +1135,21 @@ export default class QuickLatexPlugin extends Plugin {
 				case 'Enter':
 					// perform Enter shortcut within matrix block
 					if (this.settings.addMatrixBlock_toggle) {
-						if (this.withinAnyBrackets_document(
-							editor,
-							'\\begin{' + this.settings.addMatrixBlock_parameter,
-							'\\end{' + this.settings.addMatrixBlock_parameter
-						)) {
-							if (!event.shiftKey) {
+						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+						const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+						let state = false
+						for (let i = 0; i < begin_matrix.length; i++) {
+							if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+									state = true
+									break;
+								};
+						}
+						if (!event.shiftKey) {
+							if (state) {
 								editor.replaceSelection(' \\\\ ')
 								event.preventDefault();
-							};
-							return;
+								return
+							}
 						}
 					}
 
@@ -896,6 +1166,19 @@ export default class QuickLatexPlugin extends Plugin {
 							};
 							return;
 						};
+					}
+
+					// enter for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(
+							editor,
+							'\\begin{cases}',
+							'\\end{cases}'
+						)) {
+							editor.replaceSelection(' \\\\\n')
+							event.preventDefault();
+							return;
+						}
 					}
 
 					// double enter for $$
@@ -918,16 +1201,102 @@ export default class QuickLatexPlugin extends Plugin {
 				case 'Tab':
 					// perform Tab shortcut within matrix block
 					if (this.settings.addMatrixBlock_toggle) {
-						if (this.withinAnyBrackets_document(
-							editor,
-							'\\begin{' + this.settings.addMatrixBlock_parameter,
-							'\\end{' + this.settings.addMatrixBlock_parameter
+						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter, "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
+						const end_matrix = ['\\end{' + this.settings.addMatrixBlock_parameter, "\\end{matrix}","\\end{bmatrix}", "\\end{Bmatrix}", "\\end{vmatrix}", "\\end{Vmatrix}", "\\end{smallmatrix}"]
+						let state = false
+						for (let i = 0; i < begin_matrix.length; i++) {
+							if (this.withinAnyBrackets_document(editor, begin_matrix[i], end_matrix[i])) {
+									state = true
+									break;
+								};
+						}
+						if (state) {
+							editor.replaceSelection(' & ')
+							event.preventDefault();
+							return;
+						}
+					};
+					
+					// Tab shortcut for cases block
+					if (this.settings.addCasesBlock_toggle) {
+						if (this.withinAnyBrackets_document(editor,
+						'\\begin{cases}',
+						'\\end{cases}'
 						)) {
 							editor.replaceSelection(' & ')
 							event.preventDefault();
+							return;
 						};
+					};
+
+					// Tab to go to next #tab
+					const position = editor.getCursor();
+					const current_line = editor.getLine(position.line);
+					const tab_position = current_line.indexOf("#tab");
+					if (tab_position!=-1){
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+4})
+						editor.setCursor({line:position.line, ch:tab_position})
+						event.preventDefault();
 						return;
 					};
+
+					// Tab to next close bracket
+					if (this.withinMath(editor)) {
+						const position = editor.getCursor();
+						const current_line = editor.getLine(position.line);
+						
+						if (event.shiftKey) {
+							const close_symbols = ['}', ']', ')'] 
+							const preceding_text = editor.getRange({line:position.line, ch:0},{line:position.line, ch:position.ch})
+							for (let i = preceding_text.length; i >= 0; i--) {
+								if (close_symbols.contains(preceding_text[i])) {
+									editor.setCursor({line:position.line, ch:i})
+									event.preventDefault();
+									return
+								} else if (position.ch-i > 1 && preceding_text[i]=="$") {
+									editor.setCursor({line:position.line, ch:i+1})
+									event.preventDefault();
+									return
+								} else if (preceding_text.slice(-2)=="$$") {
+									editor.setCursor({line:position.line, ch:position.ch-2})
+									event.preventDefault();
+									return
+								} else if (preceding_text[-1]=="$") {
+									editor.setCursor({line:position.line, ch:position.ch-1})
+									event.preventDefault();
+									return
+								}			
+							}
+						} else {
+							const close_symbols = ['}', ']', ')', '$'] 
+							const following_text = editor.getRange({line:position.line, ch:position.ch+1},{line:position.line, ch:current_line.length})
+							for (let i = 0; i < following_text.length; i++) {
+								if (close_symbols.contains(following_text[i])) {
+									editor.setCursor({line:position.line, ch:position.ch+i+1})
+									event.preventDefault();
+									return
+								}					
+							}
+						}
+					}
+
+					// Tab out of $
+					if (this.withinMath(editor)) {
+						const position = editor.getCursor();
+						const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
+						if (next_2 == "$$") {
+							editor.setCursor({line:position.line, ch:position.ch+2})
+							event.preventDefault();
+							return
+						} else if (next_2[0] == "$") {
+							editor.setCursor({line:position.line, ch:position.ch+1})
+							event.preventDefault();
+							return
+						}
+					}
+				
 			};
 		};
 	};
@@ -998,6 +1367,53 @@ export default class QuickLatexPlugin extends Plugin {
 	};
 
 	//main functions
+	private readonly customShorthand = (
+		editor: Editor,
+		position: CodeMirror.Position,
+	): boolean => {
+		let keyword:string = "";
+		let keyword_length:number = 0;
+		for (let i = 0 ; i < this.shorthand_array.length ; i++) {
+			keyword_length = this.shorthand_array[i][0].length;
+			if ( keyword_length > position.ch) {
+				continue;
+			} else if ( keyword_length == position.ch ) {
+				keyword = "@" + editor.getRange(
+					{ line: position.line, ch: position.ch - keyword_length },
+					{ line: position.line, ch: position.ch });
+			} else {
+				keyword = editor.getRange(
+					{ line: position.line, ch: position.ch - keyword_length - 1 },
+					{ line: position.line, ch: position.ch });
+			}
+			if (keyword[0].toLowerCase() == keyword[0].toUpperCase() || 
+				keyword[0] == "@" ) {
+				if (this.shorthand_array[i][0] == keyword.slice(- keyword_length) && 
+					this.shorthand_array[i][1] != keyword) {
+					const replace_slash = (keyword[0]=="\\" && this.shorthand_array[i][1][0]=="\\") ? 1 : 0;
+					const set_cursor_position = this.shorthand_array[i][1].indexOf("#cursor");
+					editor.replaceRange(this.shorthand_array[i][1],
+						{ line: position.line, ch: position.ch - keyword_length - replace_slash },
+						{ line: position.line, ch: position.ch });
+					if (set_cursor_position != -1) {
+						editor.replaceRange("",
+						{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position},
+						{line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position+7});
+						editor.setCursor({line:position.line, ch:position.ch - keyword_length - replace_slash + set_cursor_position})
+					} else if (this.shorthand_array[i][1].slice(-2) == "{}") {
+						editor.setCursor(
+							{ line: position.line, 
+							ch: position.ch + this.shorthand_array[i][1].length - keyword_length - 1 - replace_slash}
+							);
+					} else {
+						
+					}									
+					return true;
+				};
+			};
+		};
+	};
+
 	private readonly autoEncloseSup = (
 		editor: Editor,
 		event:Event,
@@ -1014,7 +1430,7 @@ export default class QuickLatexPlugin extends Plugin {
 			const letter_after_superscript = editor.getRange(
 				{ line: position.line, ch: last_superscript + 1 },
 				{ line: position.line, ch: last_superscript + 2 });
-			if (letter_after_superscript == '(' && letter_before_cursor == ')') {
+			if (letter_after_superscript == '(' && letter_before_cursor == ')' && position.ch-last_superscript > 6) {
 				editor.replaceRange(
 					'}',
 					{ line: position.line, ch: position.ch - 1 },
@@ -1507,7 +1923,6 @@ export default class QuickLatexPlugin extends Plugin {
 	};
 
 	public onunload(): void {
-		console.log('unloading Quick-Latex plugin');
 
 		this.app.workspace.iterateCodeMirrors((cm) => {
 			cm.off('vim-mode-change', this.handleVimModeChange);
@@ -1688,6 +2103,44 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('【NEW!】Auto-align at these symbols')
+			.setDesc('When within the align block, the align symbol "&" will be automatically added before these symbols. (separate by spaces)')
+			.addText((text) => text
+				.setValue(this.plugin.settings.autoAlignSymbols)
+				.onChange(async (value) => {
+					this.plugin.settings.autoAlignSymbols = value;
+					if (value == "") {
+						this.plugin.autoAlign_array = [];
+					} else {
+						this.plugin.autoAlign_array = value.split(" ");
+					}
+					await this.plugin.saveData(this.plugin.settings);
+				}));
+
+		new Setting(containerEl)
+			.setName('Shortcut for Cases Block')
+			.setDesc('Use shortcut key to quickly insert \\begin{cases} \\end{cases} block. ' +
+				'Default: "Alt+Shift+C" (Mac: "Option+Shift+C")')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.addCasesBlock_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.addCasesBlock_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+			
+		new Setting(containerEl)
+			.setName('Use shift-enter for line break in align and cases block')
+			.setDesc('For align and cases block above, pressing enter automatically adds line break symbol "\\" or "&". Switch here to use shift-enter instead.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.shiftEnter_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.shiftEnter_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
+
+		new Setting(containerEl)
 			.setName('Shortcut for Matrix Block')
 			.setDesc('Use shortcut key to quickly  insert \\begin{pmatrix} \\end{pmatrix} block. ' +
 				'Default: "Alt+Shift+M" (Mac: "Option+Shift+M")')
@@ -1711,13 +2164,13 @@ class QuickLatexSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Shortcut for Cases Block')
-			.setDesc('Use shortcut key to quickly insert \\begin{cases} \\end{cases} block. ' +
-				'Default: "Alt+Shift+C" (Mac: "Option+Shift+C")')
+			.setName('Greek symbols math mode')
+			.setDesc('Automatically surround commands to insert Greek character written outside math mode with math chars. '+
+			'Eg, typing \\alpha followed by space outside math mode will be replaced with "$\\alpha$"')
 			.addToggle((toggle) => toggle
-				.setValue(this.plugin.settings.addCasesBlock_toggle)
+				.setValue(this.plugin.settings.autoGreekCommandMathMode_toggle)
 				.onChange(async (value) => {
-					this.plugin.settings.addCasesBlock_toggle = value;
+					this.plugin.settings.autoGreekCommandMathMode_toggle = value;
 					await this.plugin.saveData(this.plugin.settings);
 					this.display();
 				}));
@@ -1725,7 +2178,7 @@ class QuickLatexSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Custom Shorthand')
 			.setDesc('Use custom shorthand (can be multiple letters) for common latex strings. '+
-			'Eg, typing "al" followed by "space" key will replace with "\\alpha"')
+			'Eg, typing "al" followed by "space/tab" key will replace with "\\alpha"')
 			.addToggle((toggle) => toggle
 				.setValue(this.plugin.settings.customShorthand_toggle)
 				.onChange(async (value) => {
@@ -1733,33 +2186,48 @@ class QuickLatexSettingTab extends PluginSettingTab {
 					await this.plugin.saveData(this.plugin.settings);
 					this.display();
 				}));
+		
+		new Setting(containerEl)
+			.setName('Use Tab to complete custom shorthand')
+			.setDesc('Use Tab instead of space to complete custom shorthand.')
+			.addToggle((toggle) => toggle
+				.setValue(this.plugin.settings.useTabtoComplete_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.useTabtoComplete_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}));
 
 		new Setting(containerEl)
-			.setName('【updated!】Custom Shorthand Parameter')
-			.setDesc('Separate the multi-letters shorthand and the snippet with ":" and '+
-			'end each set of shorthand snippet pair by ";" and a newline. '+
+			.setName('Custom Shorthand Parameter')
+			.setDesc('Separate the multi-letters shorthand and the snippet with ":::" and '+
+			'end each set of shorthand snippet pair by "---" and a newline. '+
 			'For expressions that end with "{}", the cursor will automatically be placed within the bracket. '+
 			'Alternatively, you can type "#cursor" within the snippet to set the cursor location after replacement. '+
 			'You can also include "#tab" within the snippet for use cases such as multiple {}s (e.g. \\binom{#cursor}{#tab}). '+
 			'Pressing tab key in such cases will jump the cursor to the next "#tab" keyword.'+
-			'Shorthands now support multiline snippets too! '+
-			'(try uninstall then reinstalling the plugin to see the new set of shorthands.)')
+			'Shorthands now support multiline snippets too!'+
+			'(try uninstall then reinstalling the plugin to see the new set of shorthands.)'+
+			'【NOTE】For old users, please kindly replace ":" with ":::" in your custom shorthand parameter.')
 			.setClass("text-snippets-class")
 			.addTextArea((text) => text
 				.setValue(this.plugin.settings.customShorthand_parameter)
 				.onChange(async (value) => {
 					this.plugin.settings.customShorthand_parameter = value;
-					while(value.slice(-1)=="\n"){
+					while(value.slice(-2)=="\n"){
 						value = value.slice(0,-1)
 					}
 					if(value.slice(-1)==";"){
 						value = value.slice(0,-1)
 					}
 					if(value.lastIndexOf(";\n")==-1){
-						this.plugin.shorthand_array = value.split(",").map(item=>item.split(":").map(item=>item.trim()));
-					} else {
+						this.plugin.shorthand_array = value.split(",").map(item=>item.split(":"));
+					} else if (value.lastIndexOf(":::")==-1) {
 						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":"));
+					} else {
+						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::"));
 					}
+					
 					await this.plugin.saveData(this.plugin.settings);
 				}));
 	};
