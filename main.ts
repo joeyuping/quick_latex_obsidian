@@ -242,12 +242,20 @@ export default class QuickLatexPlugin extends Plugin {
 						};
 					}
 					
-					// Tab to go to next #tab
-					const tab_position = current_line.indexOf("#tab", position.ch);
-					if (tab_position!=-1){
+					// Tab to go to next #tab with numbering or without numbering if there are no #tabs with numbers
+					const indexed_tab_expr = /#tab(\d+)?/g;
+					let next_match;
+					let current_match;
+					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
+						if (!next_match || parseInt(current_match[1]) < parseInt(next_match[1]))
+							next_match = current_match;
+					}
+
+					if (next_match) {
+						const tab_position = next_match.index;
 						editor.replaceRange("",
 						{line:position.line, ch:tab_position},
-						{line:position.line, ch:tab_position+4})
+						{line:position.line, ch:tab_position+next_match[0].length})
 						editor.setCursor({line:position.line, ch:tab_position})
 						return true
 					}
@@ -1229,14 +1237,23 @@ export default class QuickLatexPlugin extends Plugin {
 						};
 					};
 
-					// Tab to go to next #tab
+					// Tab to go to next #tab with numbering or without numbering if there are no #tabs with numbers
 					const position = editor.getCursor();
 					const current_line = editor.getLine(position.line);
-					const tab_position = current_line.indexOf("#tab");
-					if (tab_position!=-1){
+
+					const indexed_tab_expr = /#tab(\d+)?/g;
+					let next_match;
+					let current_match;
+					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
+						if (!next_match || parseInt(current_match[1]) < parseInt(next_match[1]))
+							next_match = current_match;
+					}
+
+					if (next_match) {
+						const tab_position = next_match.index;
 						editor.replaceRange("",
 						{line:position.line, ch:tab_position},
-						{line:position.line, ch:tab_position+4})
+						{line:position.line, ch:tab_position+next_match[0].length})
 						editor.setCursor({line:position.line, ch:tab_position})
 						event.preventDefault();
 						return;
@@ -2205,9 +2222,10 @@ class QuickLatexSettingTab extends PluginSettingTab {
 			'For expressions that end with "{}", the cursor will automatically be placed within the bracket. '+
 			'Alternatively, you can type "#cursor" within the snippet to set the cursor location after replacement. '+
 			'You can also include "#tab" within the snippet for use cases such as multiple {}s (e.g. \\binom{#cursor}{#tab}). '+
-			'Pressing tab key in such cases will jump the cursor to the next "#tab" keyword.'+
-			'Shorthands now support multiline snippets too!'+
-			'(try uninstall then reinstalling the plugin to see the new set of shorthands.)'+
+			'Pressing tab key in such cases will jump the cursor to the next "#tab" keyword. '+
+			'Numbers after each "#tab" can be added to define the order in which to jump between the tabs (e.g. \\left#cursor #tab2 \\right#tab1 will first jump to #tab1 then back to #tab2). '+
+			'Shorthands now support multiline snippets too! '+
+			'(try uninstall then reinstalling the plugin to see the new set of shorthands.) '+
 			'【NOTE】For old users, please kindly replace ":" with ":::" in your custom shorthand parameter.')
 			.setClass("text-snippets-class")
 			.addTextArea((text) => text
