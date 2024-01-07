@@ -11,6 +11,7 @@ import { Prec, Extension } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 
 interface QuickLatexSettings {
+	useMathKeyboardShortcut_toggle: boolean;
 	moveIntoMath_toggle: boolean;
 	autoCloseMath_toggle: boolean;
 	autoCloseRound_toggle: boolean;
@@ -36,6 +37,7 @@ interface QuickLatexSettings {
 }
 
 const DEFAULT_SETTINGS: QuickLatexSettings = {
+	useMathKeyboardShortcut_toggle: false,
 	moveIntoMath_toggle: true,
 	autoCloseMath_toggle: true,
 	autoCloseRound_toggle: true,
@@ -876,6 +878,31 @@ export default class QuickLatexPlugin extends Plugin {
 					},
 				],
 				editorCallback: (editor) => this.addAlignBlock(editor),
+			});
+
+			this.addCommand({
+				id: 'addInlineMath',
+				name: 'Add Inline Math',
+				hotkeys: [
+					{
+						modifiers: ['Mod'],
+						key: 'M',
+					},
+				],
+				editorCallback: (editor) => this.addInlineMath(editor),
+			});
+
+			
+			this.addCommand({
+				id: 'addBlockMath',
+				name: 'Add Block Math',
+				hotkeys: [
+					{
+						modifiers: ['Mod', 'Shift'],
+						key: 'M',
+					},
+				],
+				editorCallback: (editor) => this.addBlockMath(editor),
 			});
 
 			this.addCommand({
@@ -1754,6 +1781,60 @@ export default class QuickLatexPlugin extends Plugin {
 		return retVal
 	};
 
+	private addInlineMath(editor: Editor) {
+		if(!this.settings.useMathKeyboardShortcut_toggle) return false;
+		
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view) return false;
+		
+		if (editor.getSelection().length > 0) {
+			// enclose selected text
+			const anchor = editor.getCursor("anchor")
+			const head = editor.getCursor("head")
+			editor.replaceSelection(`$${editor.getSelection()}$`)
+			if (anchor.line > head.line) {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch }, { line: head.line, ch: head.ch + 1 })
+			} else if (anchor.line < head.line) {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch + 1 }, { line: head.line, ch: head.ch })
+			} else {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch + 1 }, { line: head.line, ch: head.ch + 1 })
+			}
+		}
+		else {
+			const position = editor.getCursor();
+			editor.replaceSelection("$$");
+			editor.setCursor({ line: position.line, ch: position.ch + 1});
+		}
+		return true;
+	}
+
+	private addBlockMath(editor: Editor) {
+		if(!this.settings.useMathKeyboardShortcut_toggle) return false;
+		
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view) return false;
+		
+		if (editor.getSelection().length > 0) {
+			// enclose selected text
+			const anchor = editor.getCursor("anchor")
+			const head = editor.getCursor("head")
+			editor.replaceSelection(`$$${editor.getSelection()}$$`)
+			if (anchor.line > head.line) {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch }, { line: head.line, ch: head.ch + 2 })
+			} else if (anchor.line < head.line) {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch + 2 }, { line: head.line, ch: head.ch })
+			} else {
+				editor.setSelection({ line: anchor.line, ch: anchor.ch + 2 }, { line: head.line, ch: head.ch + 2 })
+			}
+		}
+		else {
+			const position = editor.getCursor();
+			editor.replaceSelection("$$$$");
+			editor.setCursor({ line: position.line, ch: position.ch + 2 })
+		}
+		return true;
+	}
+
 	private addAlignBlock(editor: Editor) {
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (!view) return;
@@ -1977,6 +2058,19 @@ class QuickLatexSettingTab extends PluginSettingTab {
 					await this.plugin.saveData(this.plugin.settings);
 					this.display();
 				}));
+
+		new Setting(containerEl)
+			.setName('Shortcut for inline and block math')
+			.setDesc('Enable keyboard shortcuts for inline ($...$) and block ($$...$$) math. '+
+					'Default: ctrl+m (cmd+m on mac) for inline and ctrl+shift+m (cmd+shift+m on mac) for block.')
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.useMathKeyboardShortcut_toggle)
+				.onChange(async (value) => {
+					this.plugin.settings.useMathKeyboardShortcut_toggle = value;
+					await this.plugin.saveData(this.plugin.settings);
+					this.display();
+				})
+			});
 
 		new Setting(containerEl)
 			.setName('Move cursor between $$ symbols')
