@@ -196,6 +196,24 @@ export default class QuickLatexPlugin extends Plugin {
 						}
 					};
 
+					// Tab to go to next #tab with numbering or without numbering if there are no #tabs with numbers
+					const indexed_tab_expr = /#tab(\d+)?/g;
+					let next_match;
+					let current_match;
+					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
+						if (!next_match || parseInt(current_match[1]) < parseInt(next_match[1]))
+							next_match = current_match;
+					}
+
+					if (next_match) {
+						const tab_position = next_match.index;
+						editor.replaceRange("",
+						{line:position.line, ch:tab_position},
+						{line:position.line, ch:tab_position+next_match[0].length})
+						editor.setCursor({line:position.line, ch:tab_position})
+						return true
+					}
+					
 					// Tab shortcut for matrix block
 					if (this.settings.addMatrixBlock_toggle) {
 						const begin_matrix = ['\\begin{' + this.settings.addMatrixBlock_parameter+'}', "\\begin{matrix}","\\begin{bmatrix}", "\\begin{Bmatrix}", "\\begin{vmatrix}", "\\begin{Vmatrix}", "\\begin{smallmatrix}"]
@@ -243,26 +261,7 @@ export default class QuickLatexPlugin extends Plugin {
 							}
 						};
 					}
-					
-					// Tab to go to next #tab with numbering or without numbering if there are no #tabs with numbers
-					const indexed_tab_expr = /#tab(\d+)?/g;
-					let next_match;
-					let current_match;
-					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
-						if (!next_match || parseInt(current_match[1]) < parseInt(next_match[1]))
-							next_match = current_match;
-					}
-
-					if (next_match) {
-						const tab_position = next_match.index;
-						editor.replaceRange("",
-						{line:position.line, ch:tab_position},
-						{line:position.line, ch:tab_position+next_match[0].length})
-						editor.setCursor({line:position.line, ch:tab_position})
-						return true
-					}
-					
-
+		
 					// Tab out of $
 					const next_2 = editor.getRange({line:position.line, ch:position.ch},{line:position.line, ch:position.ch+2})
 					if (next_2 == "$$") {
