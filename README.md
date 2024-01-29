@@ -1,6 +1,6 @@
-# Quick Latex for Obsidian
+# Quick Latex
 
-**v 2.6.3**
+**v 2.6.3 - 2.6.5**
 * bug fixes
 
 **v 2.6.1**
@@ -139,8 +139,9 @@ bi:::\\binom{#cursor}{#tab};
 
 ---
 ## Note:
-* The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime!
+* The repo depends on the latest Obsidian API (obsidian.d.ts) in Typescript Definition format, which is still in early alpha so might break anytime.
 * This is my first Obsidian Plugin project, bugs might be present. Please use with caution.
+* Pull requests are welcome!
 * Compatible with builtin vim-mode.
 
 ---
