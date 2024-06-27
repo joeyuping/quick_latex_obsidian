@@ -33,7 +33,8 @@ interface QuickLatexSettings {
 	autoGreekCommandMathMode_toggle: boolean;
 	customShorthand_toggle: boolean;
 	useTabtoComplete_toggle: boolean;
-	customShorthand_parameter: string
+	customShorthand_parameter: string;
+	customTab_parameter: string
 }
 
 const DEFAULT_SETTINGS: QuickLatexSettings = {
@@ -68,7 +69,8 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 							"nu:::\\nu;\nxi:::\\xi;\nXi:::\\Xi;\npi:::\\pi;\nPi:::\\Pi;\n"+
 							"rh:::\\rho;\nsi:::\\sigma;\nSi:::\\Sigma;\nta:::\\tau;\n"+
 							"up:::\\upsilon;\nUp:::\\Upsilon;\nph:::\\phi;\nPh:::\\Phi;\nch:::\\chi;\n"+
-							"ps:::\\psi;\nPs:::\\Psi;\nom:::\\omega;\nOm:::\\Omega"
+							"ps:::\\psi;\nPs:::\\Psi;\nom:::\\omega;\nOm:::\\Omega",
+	customTab_parameter: "#tab"
 }
  
 export default class QuickLatexPlugin extends Plugin {
@@ -197,7 +199,7 @@ export default class QuickLatexPlugin extends Plugin {
 					};
 
 					// Tab to go to next #tab with numbering or without numbering if there are no #tabs with numbers
-					const indexed_tab_expr = /#tab(\d+)?/g;
+					const indexed_tab_expr = new RegExp(`${this.settings.customTab_parameter}(\\d+)?`, 'g');
 					let next_match;
 					let current_match;
 					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
@@ -1267,7 +1269,7 @@ export default class QuickLatexPlugin extends Plugin {
 					const position = editor.getCursor();
 					const current_line = editor.getLine(position.line);
 
-					const indexed_tab_expr = /#tab(\d+)?/g;
+					const indexed_tab_expr = new RegExp(`${this.settings.customTab_parameter}(\\d+)?`, 'g');
 					let next_match;
 					let current_match;
 					while ((current_match = indexed_tab_expr.exec(current_line)) != null) {
@@ -2339,6 +2341,17 @@ class QuickLatexSettingTab extends PluginSettingTab {
 						this.plugin.shorthand_array = value.split(";\n").map(item=>item.split(":::"));
 					}
 					
+					await this.plugin.saveData(this.plugin.settings);
+				}));
+
+		new Setting(containerEl)
+			.setName('Custom #tab')
+			.setDesc('Change the #tab keyword to something else.')
+			.addText((text) => text
+				.setPlaceholder('default: #tab')
+				.setValue(this.plugin.settings.customTab_parameter)
+				.onChange(async (value) => {
+					this.plugin.settings.customTab_parameter = value;
 					await this.plugin.saveData(this.plugin.settings);
 				}));
 	};
