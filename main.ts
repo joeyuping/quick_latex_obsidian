@@ -34,7 +34,8 @@ interface QuickLatexSettings {
 	customShorthand_toggle: boolean;
 	useTabtoComplete_toggle: boolean;
 	customShorthand_parameter: string;
-	customTab_parameter: string
+	customTab_parameter: string;
+	customFraction_parameter: string;
 }
 
 const DEFAULT_SETTINGS: QuickLatexSettings = {
@@ -70,7 +71,8 @@ const DEFAULT_SETTINGS: QuickLatexSettings = {
 							"rh:::\\rho;\nsi:::\\sigma;\nSi:::\\Sigma;\nta:::\\tau;\n"+
 							"up:::\\upsilon;\nUp:::\\Upsilon;\nph:::\\phi;\nPh:::\\Phi;\nch:::\\chi;\n"+
 							"ps:::\\psi;\nPs:::\\Psi;\nom:::\\omega;\nOm:::\\Omega",
-	customTab_parameter: "#tab"
+	customTab_parameter: "#tab",
+	customFraction_parameter: "\\frac",
 }
  
 export default class QuickLatexPlugin extends Plugin {
@@ -1540,7 +1542,7 @@ export default class QuickLatexPlugin extends Plugin {
 						{ line: position.line, ch: last_divide + 1 }
 						);
 					editor.replaceRange(
-						'\\frac{',
+						this.settings.customFraction_parameter + '{',
 						{ line: position.line, ch: pos_of_the_open_bracket },
 						{ line: position.line, ch: pos_of_the_open_bracket + 1 }
 						);
@@ -1591,7 +1593,7 @@ export default class QuickLatexPlugin extends Plugin {
 			{ line: position.line, ch: last_divide + 1 + denominator_remove_bracket }
 			);
 		editor.replaceRange(
-			'\\frac{',
+			this.settings.customFraction_parameter + '{',
 			{ line: position.line, ch: frac + 1 },
 			{ line: position.line, ch: frac + 1 + numerator_remove_bracket }
 			);
@@ -1634,7 +1636,7 @@ export default class QuickLatexPlugin extends Plugin {
 						{ line: position.line, ch: last_divide + 1 }
 						);
 					editor.replaceRange(
-						'\\frac{',
+						this.settings.customFraction_parameter + '{',
 						{ line: position.line, ch: pos_of_the_open_bracket },
 						{ line: position.line, ch: pos_of_the_open_bracket + 1 }
 						);
@@ -1684,7 +1686,7 @@ export default class QuickLatexPlugin extends Plugin {
 			{ line: position.line, ch: last_divide + 1 + denominator_remove_bracket }
 			);
 		editor.replaceRange(
-			'\\frac{',
+			this.settings.customFraction_parameter + '{',
 			{ line: position.line, ch: frac + 1 },
 			{ line: position.line, ch: frac + 1 + numerator_remove_bracket }
 			);
@@ -2214,6 +2216,18 @@ class QuickLatexSettingTab extends PluginSettingTab {
 					await this.plugin.saveData(this.plugin.settings);
 				}));
 
+		new Setting(containerEl)
+			.setName("Custom Fraction Parameter")
+			.setDesc("Set the fraction substitution used, for example \\cfrac or \\dfrac.")
+			.addText((text) =>
+				text
+				.setPlaceholder("default: \\frac")
+				.setValue(this.plugin.settings.customFraction_parameter)
+				.onChange(async (value) => {
+					this.plugin.settings.customFraction_parameter = value;
+					await this.plugin.saveData(this.plugin.settings);
+				}));
+				
 		new Setting(containerEl)
 			.setName('【NEW!】Auto-align at these symbols')
 			.setDesc('When within the align block, the align symbol "&" will be automatically added before these symbols. (separate by spaces)')
