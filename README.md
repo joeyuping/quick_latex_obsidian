@@ -1,5 +1,9 @@
 # Quick Latex
 
+# NOTE: This plugin is no longer maintained. 
+Thank you so much for using this plugin! I do hope it has been helpful. There is now a more powerful and well maintained Latex writing plugin that I highly recommend : [Latex Suite](obsidian://show-plugin?id=obsidian-latex-suite).
+Thank you!
+
 **v 2.6.3 - 2.6.5**
 * bug fixes
 
